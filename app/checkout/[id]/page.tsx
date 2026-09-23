@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import axios from 'axios';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -134,11 +135,11 @@ export default function CheckoutPage() {
     setProcessing(true);
     try {
       const response = await axios.post('/api/orders/create', {
-        items: cart.map(item => ({
-          productId: item.productId,
+        items: cart.map((item: any) => ({
+          productId: item.productId || item._id || item.id,
           quantity: item.quantity,
           price: item.salePrice || item.price,
-          vendor: item.vendor
+          vendor: item.vendor || item.vendorId
         })),
         shippingAddress,
         totalAmount,
@@ -403,8 +404,8 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
               
               <div className="space-y-3 max-h-60 overflow-y-auto mb-4 pr-1">
-                {cart.map((item) => (
-                  <div key={item.productId} className="flex justify-between items-center text-sm border-b pb-2">
+                {cart.map((item: any) => (
+                  <div key={item.productId || item._id || item.id} className="flex justify-between items-center text-sm border-b pb-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
                       <span className="text-gray-500">x{item.quantity}</span>
