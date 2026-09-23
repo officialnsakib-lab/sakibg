@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db'; // অথবা আপনার প্রজেক্টের সঠিক ফাংশন নাম অনুযায়ী
+import { connectDB } from '@/lib/db';
 import Category from '@/models/Category';
 
 export async function GET() {
   try {
-    await connectDB(); // এখানে dbConnect এর বদলে connectDB ব্যবহার করা হলো
+    await connectDB();
 
-    // মেইন ক্যাটাগরিগুলো ফেচ করা (যাদের parentCategory নেই বা null)
-    const mainCategories = await Category.find({ parentCategory: null, isActive: true }).lean();
+    // মেইন ক্যাটাগরিগুলো ফেচ করার সময় `as any` যোগ করা হয়েছে
+    const mainCategories = await Category.find({ parentCategory: null, isActive: true } as any).lean();
 
     // প্রতিটা মেইন ক্যাটাগরির বিপরীতে সাব-ক্যাটাগরিগুলো খুঁজে বের করা
     const categoriesWithSubs = await Promise.all(
       mainCategories.map(async (cat: any) => {
-        const subCategories = await Category.find({ parentCategory: cat._id, isActive: true }).lean();
+        const subCategories = await Category.find({ parentCategory: cat._id, isActive: true } as any).lean();
         return {
           ...cat,
           subCategories
