@@ -113,12 +113,12 @@ export default function Navbar() {
   return (
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
-      <div className="border-b border-amber-500/10">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="border-b border-amber-500/15">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Custom Logo Image */}
+          {/* Custom Logo Image - Fully Responsive */}
           <Link href="/" className="flex items-center group shrink-0">
-            <div className="relative w-48 h-16 overflow-hidden flex items-center justify-center">
+            <div className="relative w-32 xs:w-36 sm:w-44 lg:w-48 h-10 xs:h-12 sm:h-14 overflow-hidden flex items-center justify-center">
               <Image 
                 src="/tt.png" 
                 alt="Wahisnova IMEX Logo" 
@@ -129,8 +129,8 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Central Search Bar */}
-          <div className="flex-1 max-w-2xl hidden md:block">
+          {/* Central Search Bar (Desktop) */}
+          <div className="flex-1 max-w-xl hidden md:block px-2">
             <form onSubmit={handleSearch} className="relative flex items-center">
               <input
                 type="text"
@@ -152,7 +152,7 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Icons */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 lg:gap-3 shrink-0">
             
             {/* Auth / Profile Area */}
             {!loading && (
@@ -161,12 +161,12 @@ export default function Navbar() {
                   <div className="relative" ref={userMenuRef}>
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center gap-2 p-1.5 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-amber-500/30"
+                      className="flex items-center gap-1.5 p-1 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-amber-500/30"
                     >
-                      <div className="w-8 h-8 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-sm">
                         {getUserInitials()}
                       </div>
-                      <span className="hidden lg:block text-sm font-medium text-amber-100">
+                      <span className="hidden lg:block text-sm font-medium text-amber-100 max-w-[100px] truncate">
                         {user?.name?.split(' ')[0]}
                       </span>
                     </button>
@@ -175,7 +175,7 @@ export default function Navbar() {
                     {isUserMenuOpen && (
                       <div className="absolute right-0 mt-2 w-56 bg-white text-neutral-800 rounded-xl shadow-2xl border border-amber-100 py-2 z-50">
                         <div className="px-4 py-3 border-b border-gray-100">
-                          <p className="text-sm font-bold text-gray-900">{user?.name}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
                           <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                           <span className={`inline-block mt-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full ${
                             user?.role === 'admin' ? 'bg-red-100 text-red-700' :
@@ -200,20 +200,20 @@ export default function Navbar() {
                 ) : (
                   <Link
                     href="/login"
-                    className="flex items-center gap-2 text-sm font-medium text-amber-100 hover:text-amber-400 transition-colors"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amber-100 hover:text-amber-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-white/5"
                   >
-                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <span className="hidden sm:inline">Login / Register</span>
+                    <span className="hidden sm:inline">Login</span>
                   </Link>
                 )}
               </>
             )}
 
-            {/* Wishlist Icon with Dynamic Badge */}
-            <Link href="/wishlist" className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center" aria-label="Wishlist">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Wishlist Icon */}
+            <Link href="/wishlist" className="relative p-1.5 sm:p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded-lg hover:bg-white/5" aria-label="Wishlist">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               {totalWishlistItems > 0 && (
@@ -223,9 +223,9 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Dynamic Cart Badge */}
-            <Link href="/cart" className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center" aria-label="Cart">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Cart Icon */}
+            <Link href="/cart" className="relative p-1.5 sm:p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded-lg hover:bg-white/5" aria-label="Cart">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {totalCartItems > 0 && (
@@ -238,7 +238,7 @@ export default function Navbar() {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-amber-100 hover:text-amber-400"
+              className="md:hidden p-1.5 text-amber-100 hover:text-amber-400 rounded-lg hover:bg-white/5 transition-colors"
               aria-label="Toggle Menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,14 +254,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Sub Navbar Links & Global Shipping */}
+      {/* Sub Navbar Links & Global Shipping (Desktop) */}
       <div className="hidden md:block border-b border-amber-500/10 bg-[#05080e]">
-        <div className="container mx-auto px-4 flex items-center justify-between h-12">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 flex items-center justify-between h-12">
           
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto scrollbar-none">
             <Link 
               href="/" 
-              className={`text-sm font-medium transition-colors relative py-3 ${
+              className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                 pathname === '/' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
               }`}
             >
@@ -271,7 +271,7 @@ export default function Navbar() {
             
             <Link 
               href="/digital-products" 
-              className={`text-sm font-medium transition-colors relative py-3 ${
+              className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                 pathname === '/digital-products' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
               }`}
             >
@@ -281,7 +281,7 @@ export default function Navbar() {
 
             <Link 
               href="/physical-products" 
-              className={`text-sm font-medium transition-colors relative py-3 ${
+              className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                 pathname === '/physical-products' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
               }`}
             >
@@ -291,7 +291,7 @@ export default function Navbar() {
 
             <Link 
               href="/categories" 
-              className={`text-sm font-medium transition-colors relative py-3 ${
+              className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                 pathname === '/categories' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
               }`}
             >
@@ -302,7 +302,7 @@ export default function Navbar() {
             {isVendor && (
               <Link 
                 href="/vendor/dashboard" 
-                className={`text-sm font-medium transition-colors relative py-3 ${
+                className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                   pathname.startsWith('/vendor') ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
                 }`}
               >
@@ -313,7 +313,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link 
                 href="/admin/dashboard" 
-                className={`text-sm font-medium transition-colors relative py-3 ${
+                className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                   pathname.startsWith('/admin') ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
                 }`}
               >
@@ -322,7 +322,7 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
               🌍
             </div>
@@ -335,61 +335,43 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Drawer (Fully Responsive & Clean) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#070b12] border-t border-amber-500/10 px-4 py-4 space-y-4 shadow-2xl">
+        <div className="md:hidden bg-[#070b12] border-t border-amber-500/15 px-4 py-4 space-y-4 shadow-2xl">
           <form onSubmit={handleSearch} className="flex gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products..."
-              className="flex-1 bg-white text-neutral-900 px-4 py-2 rounded-xl text-sm focus:outline-none"
+              className="flex-1 bg-white text-neutral-900 px-4 py-2.5 rounded-xl text-sm focus:outline-none"
             />
-            <button type="submit" className="px-4 py-2 bg-amber-400 text-neutral-950 font-semibold rounded-xl text-sm">
+            <button type="submit" className="px-4 py-2.5 bg-amber-400 text-neutral-950 font-semibold rounded-xl text-sm shrink-0">
               Search
             </button>
           </form>
 
-          <div className="flex flex-col space-y-2 pt-2 border-t border-amber-500/10">
-            <Link href="/" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Home</Link>
-            <Link href="/digital-products" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Digital Products</Link>
-            <Link href="/physical-products" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Physical Products</Link>
-            <Link href="/categories" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Categories</Link>
+          <div className="flex flex-col space-y-1 pt-2 border-t border-amber-500/15">
+            <Link href="/" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Home</Link>
+            <Link href="/digital-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Digital Products</Link>
+            <Link href="/physical-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Physical Products</Link>
+            <Link href="/categories" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Categories</Link>
             
-            {isVendor && <Link href="/vendor/dashboard" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Vendor Dashboard</Link>}
-            {isAdmin && <Link href="/admin/dashboard" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Admin Dashboard</Link>}
+            {isVendor && <Link href="/vendor/dashboard" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Vendor Dashboard</Link>}
+            {isAdmin && <Link href="/admin/dashboard" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Admin Dashboard</Link>}
 
-            <div className="pt-2 border-t border-amber-500/10 space-y-2">
-              {/* Mobile wishlist link with count */}
-              <Link href="/wishlist" className="py-2 text-amber-100 hover:text-amber-400 font-medium flex items-center justify-between">
-                <span>❤️ Wishlist</span>
-                {totalWishlistItems > 0 && (
-                  <span className="bg-red-500 text-white font-bold text-xs px-2 py-0.5 rounded-full">
-                    {totalWishlistItems}
-                  </span>
-                )}
-              </Link>
-              
-              {/* Mobile dynamic cart link */}
-              <Link href="/cart" className="py-2 text-amber-100 hover:text-amber-400 font-medium flex items-center justify-between">
-                <span>🛒 Cart & Checkout</span>
-                {totalCartItems > 0 && (
-                  <span className="bg-amber-400 text-neutral-950 font-bold text-xs px-2 py-0.5 rounded-full">
-                    {totalCartItems}
-                  </span>
-                )}
-              </Link>
-
+            <div className="pt-2 border-t border-amber-500/15 space-y-1">
               {isAuthenticated ? (
                 <>
-                  <Link href={getDashboardLink()} className="block py-2 text-amber-100 font-medium">📊 Dashboard</Link>
-                  <Link href="/profile" className="block py-2 text-amber-100 font-medium">👤 Profile Settings</Link>
-                  <Link href="/orders" className="block py-2 text-amber-100 font-medium">📋 My Orders</Link>
-                  <button onClick={handleLogout} className="block w-full text-left py-2 text-red-400 font-medium">🚪 Logout</button>
+                  <Link href={getDashboardLink()} className="block py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 font-medium">📊 Dashboard</Link>
+                  <Link href="/profile" className="block py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 font-medium">👤 Profile Settings</Link>
+                  <Link href="/orders" className="block py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 font-medium">📋 My Orders</Link>
+                  <button onClick={handleLogout} className="block w-full text-left py-2.5 px-3 rounded-lg text-red-400 hover:bg-red-500/10 font-medium">🚪 Logout</button>
                 </>
               ) : (
-                <Link href="/login" className="block text-center py-2 bg-amber-400 text-neutral-950 rounded-xl font-semibold">Login / Register</Link>
+                <div className="pt-2">
+                  <Link href="/login" className="block text-center py-3 bg-amber-400 text-neutral-950 rounded-xl font-semibold shadow-md">Login / Register</Link>
+                </div>
               )}
             </div>
           </div>
