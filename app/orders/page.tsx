@@ -11,15 +11,13 @@ import {
   Download,
   Eye,
   ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-  Clock,
-  XCircle
+  ChevronRight
 } from 'lucide-react';
 
 interface Order {
   _id: string;
   orderId: string;
+  productId: string; // প্রডাক্ট আইডি যুক্ত করা হলো যাতে সঠিক প্রডাক্ট পেজে যাওয়া যায়
   productTitle: string;
   productType: string;
   price: number;
@@ -35,7 +33,7 @@ interface Order {
 }
 
 export default function MyOrdersPage() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -151,12 +149,14 @@ export default function MyOrdersPage() {
                           Download
                         </Link>
                       )}
+                      
+                      {/* এখানে order._id এর পরিবর্তে order.productId ব্যবহার করা হয়েছে যাতে 404 ইরর না আসে */}
                       <Link
-                        href={`/digital-products/${order._id}`}
+                        href={`/digital-products/${order.productId}`}
                         className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
                       >
                         <Eye className="w-4 h-4" />
-                        View
+                        View Product
                       </Link>
                     </div>
                   </div>

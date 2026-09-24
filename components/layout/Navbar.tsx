@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext'; // Cart Context ইমপোর্ট
+import { useWishlist } from '@/context/WishlistContext'; // Wishlist Context ইমপোর্ট
 import { toast } from 'react-hot-toast';
 
 export default function Navbar() {
@@ -12,6 +14,13 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, isAdmin, isVendor, logout, loading } = useAuth();
   
+  // Cart & Wishlist Context থেকে তথ্য আনা
+  const { cart } = useCart();
+  const { wishlist } = useWishlist();
+
+  // Hydration mismatch রোধ করতে client-side state
+  const [mounted, setMounted] = useState(false);
+
   // UI state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -20,8 +29,12 @@ export default function Navbar() {
   
   const userMenuRef = useRef<HTMLDivElement>(null);
   
-  // ✅ Hide navbar on vendor/admin pages
+  // Hide navbar on vendor/admin pages
   const isDashboardPage = pathname.startsWith('/vendor') || pathname.startsWith('/admin');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Handle scroll for navbar shadow
   useEffect(() => {
@@ -83,23 +96,31 @@ export default function Navbar() {
     if (isVendor) return '/vendor/dashboard';
     return '/dashboard';
   };
+
+  // মোট কার্ট আইটেমের সংখ্যা গণনা
+  const totalCartItems = mounted && Array.isArray(cart) 
+    ? cart.reduce((total, item) => total + (item.quantity || 1), 0)
+    : 0;
+
+  // মোট উইশলিস্ট আইটেমের সংখ্যা গণনা
+  const totalWishlistItems = mounted && Array.isArray(wishlist) ? wishlist.length : 0;
   
-  // ✅ If dashboard page, don't show navbar
+  // If dashboard page, don't show navbar
   if (isDashboardPage) {
     return null;
   }
   
   return (
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
-      {/* Top Main Navbar Section (Logo, Search, Auth, Wishlist, Cart) */}
+      {/* Top Main Navbar Section */}
       <div className="border-b border-amber-500/10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           
-          {/* Fully Custom Logo Image (Larger Size: w-48 h-16) */}
+          {/* Custom Logo Image */}
           <Link href="/" className="flex items-center group shrink-0">
             <div className="relative w-48 h-16 overflow-hidden flex items-center justify-center">
               <Image 
-                src="/tt.png" // আপনার public ফোল্ডারে থাকা লোগো ফাইল
+                src="/tt.png" 
                 alt="Wahisnova IMEX Logo" 
                 fill 
                 className="object-contain object-left"
@@ -130,7 +151,7 @@ export default function Navbar() {
             </form>
           </div>
 
-          {/* Right Action Icons (Login/Register, Wishlist, Cart) */}
+          {/* Right Action Icons */}
           <div className="flex items-center gap-4 shrink-0">
             
             {/* Auth / Profile Area */}
@@ -190,21 +211,28 @@ export default function Navbar() {
               </>
             )}
 
-            {/* Wishlist Icon */}
-            <Link href="/wishlist" className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors" aria-label="Wishlist">
+            {/* Wishlist Icon with Dynamic Badge */}
+            <Link href="/wishlist" className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center" aria-label="Wishlist">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
+              {totalWishlistItems > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                  {totalWishlistItems}
+                </span>
+              )}
             </Link>
 
-            {/* Cart / Checkout Icon */}
+            {/* Dynamic Cart Badge */}
             <Link href="/cart" className="relative p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center" aria-label="Cart">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span className="absolute top-0 right-0 bg-amber-400 text-neutral-950 font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                0
-              </span>
+              {totalCartItems > 0 && (
+                <span className="absolute top-0 right-0 bg-amber-400 text-neutral-950 font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                  {totalCartItems}
+                </span>
+              )}
             </Link>
 
             {/* Mobile Menu Toggle Button */}
@@ -333,8 +361,26 @@ export default function Navbar() {
             {isAdmin && <Link href="/admin/dashboard" className="py-2 text-amber-100 hover:text-amber-400 font-medium">Admin Dashboard</Link>}
 
             <div className="pt-2 border-t border-amber-500/10 space-y-2">
-              <Link href="/wishlist" className="block py-2 text-amber-100 hover:text-amber-400 font-medium">❤️ Wishlist</Link>
-              <Link href="/cart" className="block py-2 text-amber-100 hover:text-amber-400 font-medium">🛒 Cart & Checkout</Link>
+              {/* Mobile wishlist link with count */}
+              <Link href="/wishlist" className="py-2 text-amber-100 hover:text-amber-400 font-medium flex items-center justify-between">
+                <span>❤️ Wishlist</span>
+                {totalWishlistItems > 0 && (
+                  <span className="bg-red-500 text-white font-bold text-xs px-2 py-0.5 rounded-full">
+                    {totalWishlistItems}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Mobile dynamic cart link */}
+              <Link href="/cart" className="py-2 text-amber-100 hover:text-amber-400 font-medium flex items-center justify-between">
+                <span>🛒 Cart & Checkout</span>
+                {totalCartItems > 0 && (
+                  <span className="bg-amber-400 text-neutral-950 font-bold text-xs px-2 py-0.5 rounded-full">
+                    {totalCartItems}
+                  </span>
+                )}
+              </Link>
+
               {isAuthenticated ? (
                 <>
                   <Link href={getDashboardLink()} className="block py-2 text-amber-100 font-medium">📊 Dashboard</Link>

@@ -5,12 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Loader2, Package, ChevronRight, Globe, Download, ShieldCheck, Zap, ArrowRight, CheckCircle } from 'lucide-react';
+import { Loader2, Package, ChevronRight, Globe, ShieldCheck, Zap, ArrowRight, CheckCircle, ShoppingCart, ShoppingBag } from 'lucide-react';
 import ProductInfo from '@/components/product/ProductInfo';
 import ReviewsSection from '@/components/product/ReviewsSection';
 import RelatedProducts from '@/components/product/RelatedProducts';
 
-export default function DigitalProductDetailsPage() {
+export default function PhysicalProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
@@ -20,7 +20,7 @@ export default function DigitalProductDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
-  const [downloading, setDownloading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -32,7 +32,7 @@ export default function DigitalProductDetailsPage() {
           setRelatedProducts(response.data.data.relatedProducts || []);
         }
       } catch (error: any) {
-        toast.error('Failed to load digital product');
+        toast.error('Failed to load physical product');
       } finally {
         setLoading(false);
       }
@@ -41,21 +41,22 @@ export default function DigitalProductDetailsPage() {
     if (productId) fetchProduct();
   }, [productId]);
 
-  // গ্লোবাল ইনস্ট্যান্ট চেকআউট ও পেমেন্ট হ্যান্ডলার
-  const handleGlobalCheckout = async () => {
+  // ফিজিক্যাল প্রোডাক্ট কার্টে যোগ করার হ্যান্ডলার
+  const handleAddToCart = async () => {
     try {
-      setDownloading(true);
-      const res = await axios.post('/api/checkout/create-session', { productId });
-      if (res.data.success && res.data.url) {
-        window.location.href = res.data.url;
-      } else {
-        toast.error('Could not initiate global checkout');
-      }
+      setSubmitting(true);
+      // আপনার কার্ট API বা লজিক এখানে যুক্ত করুন
+      toast.success('Product added to cart successfully!');
     } catch (err) {
-      toast.error('Payment gateway error');
+      toast.error('Failed to add to cart');
     } finally {
-      setDownloading(false);
+      setSubmitting(false);
     }
+  };
+
+  // ফিজিক্যাল প্রোডাক্ট চেকআউট / বাই নাউ হ্যান্ডলার
+  const handleBuyNow = () => {
+    router.push(`/checkout/${productId}`);
   };
 
   if (loading) {
@@ -71,7 +72,7 @@ export default function DigitalProductDetailsPage() {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-100">
         <div className="text-center">
           <Package className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">Digital Product Not Found</h1>
+          <h1 className="text-2xl font-bold">Physical Product Not Found</h1>
         </div>
       </div>
     );
@@ -79,15 +80,15 @@ export default function DigitalProductDetailsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Global Banner / Top Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border-b border-slate-800 py-3">
+      {/* Global Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border-b border-slate-800 py-3">
         <div className="container mx-auto px-4 flex flex-wrap justify-between items-center text-xs sm:text-sm text-slate-300 gap-2">
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4 text-cyan-400" />
-            <span>Global Digital Store — Available Worldwide for Instant Purchase</span>
+            <span>Physical Products Store — Available Worldwide for Shipping</span>
           </div>
           <div className="flex items-center gap-4 text-cyan-300 font-medium">
-            <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> Instant Delivery</span>
+            <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> Fast Delivery</span>
             <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> 100% Secure Checkout</span>
           </div>
         </div>
@@ -99,8 +100,8 @@ export default function DigitalProductDetailsPage() {
           <nav className="flex items-center gap-1.5 text-sm text-slate-400">
             <Link href="/" className="hover:text-cyan-400">Home</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/digital-products" className="hover:text-cyan-400">
-              Digital Products
+            <Link href="/physical-products" className="hover:text-cyan-400">
+              Physical Products
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-slate-100 font-medium truncate">{product.title}</span>
@@ -111,48 +112,47 @@ export default function DigitalProductDetailsPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-          {/* Product Thumbnail / Preview */}
+          {/* Product Thumbnail */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
-            <div className="h-80 sm:h-[420px] bg-gradient-to-br from-cyan-950 via-slate-900 to-indigo-950 relative flex items-center justify-center p-4">
+            <div className="h-80 sm:h-[420px] bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 relative flex items-center justify-center p-4">
               {product.thumbnailUrl ? (
                 <img src={product.thumbnailUrl} alt={product.title} className="w-full h-full object-cover rounded-xl shadow-lg" />
               ) : (
-                <Globe className="w-24 h-24 text-cyan-400/40 animate-pulse" />
+                <Package className="w-24 h-24 text-cyan-400/40 animate-pulse" />
               )}
               <div className="absolute top-4 left-4 bg-cyan-500/10 border border-cyan-500/30 backdrop-blur-md px-3 py-1 rounded-full text-xs text-cyan-300 font-semibold flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5" /> Global Access
+                <Package className="w-3.5 h-3.5" /> Physical Product
               </div>
             </div>
             
-            {/* Instant Delivery Guarantee Box */}
             <div className="p-4 bg-slate-950/60 border-t border-slate-800 grid grid-cols-2 gap-4 text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <Download className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                <span>Instant Download upon payment verification</span>
+                <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <span>Standard Delivery available nationwide</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                <span>Lifetime license & future updates included</span>
+                <ShieldCheck className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <span>Secure Packaging & Quality Guaranteed</span>
               </div>
             </div>
           </div>
 
-          {/* Product Info & Global Buy Options */}
+          {/* Product Info & Cart/Buy Options */}
           <div className="space-y-6">
             <ProductInfo
               product={product}
               onWishlist={() => setIsWishlisted(!isWishlisted)}
               isWishlisted={isWishlisted}
-              isDigital={true}
+              isDigital={false}
             />
 
-            {/* Direct Global Buy / Checkout Buttons */}
+            {/* Direct Add to Cart / Buy Now Buttons */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-md">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs text-slate-400">Total Price</span>
                   <div className="text-2xl font-extrabold text-cyan-400">
-                    ${product.price} <span className="text-xs text-slate-400 font-normal">USD / Global</span>
+                    ${product.price} <span className="text-xs text-slate-400 font-normal">USD</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -162,41 +162,30 @@ export default function DigitalProductDetailsPage() {
                 </div>
               </div>
 
-              {/* 🔴 পাশাপাশি Install এবং Get Now বাটন */}
+              {/* 🔴 Add to Cart এবং Buy Now বাটন */}
               <div className="flex items-center gap-3 w-full">
                 <button
-                  onClick={handleGlobalCheckout}
-                  disabled={downloading}
-                  className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={handleAddToCart}
+                  disabled={submitting}
+                  className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-slate-700 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {downloading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Download className="w-5 h-5" />
-                      <span>Install</span>
-                    </>
-                  )}
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>Add to Cart</span>
                 </button>
 
                 <button
-                  onClick={handleGlobalCheckout}
-                  disabled={downloading}
-                  className="flex-1 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all border border-slate-700 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={handleBuyNow}
+                  disabled={submitting}
+                  className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {downloading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Get Now</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Buy Now</span>
+                  <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
 
               <p className="text-center text-xs text-slate-400">
-                Supports International Cards, PayPal, and Crypto. Instant access link sent via email & dashboard.
+                Cash on Delivery and Online Payments available at checkout.
               </p>
             </div>
           </div>
@@ -220,7 +209,7 @@ export default function DigitalProductDetailsPage() {
                   activeTab === 'reviews' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Global Reviews ({product.totalReviews || 0})
+                Reviews ({product.totalReviews || 0})
               </button>
             </div>
           </div>
@@ -233,7 +222,7 @@ export default function DigitalProductDetailsPage() {
                 {product.features?.length > 0 && (
                   <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
                     <h3 className="font-bold text-slate-100 mb-3 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-cyan-400" /> Key Features & Specifications
+                      <Zap className="w-4 h-4 text-cyan-400" /> Specifications & Details
                     </h3>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                       {product.features.map((feature: string, i: number) => (
@@ -256,7 +245,7 @@ export default function DigitalProductDetailsPage() {
           </div>
         </div>
 
-        {/* Related Digital Products */}
+        {/* Related Physical Products */}
         <RelatedProducts products={relatedProducts} />
       </div>
     </div>

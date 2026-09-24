@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
-import { CartProvider } from '@/context/CartContext'; // কার্ট প্রোভাইডার ইম্পোর্ট করা হলো
+import { CartProvider } from '@/context/CartContext'; // Cart Provider imported
+import { WishlistProvider } from '@/context/WishlistContext'; // Wishlist Provider imported
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from 'react-hot-toast';
@@ -24,12 +25,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
-          <CartProvider> {/* এখানে কার্ট প্রোভাইডার র‍্যাপ করা হলো */}
-            <MaintenanceCheck>
-              <Navbar />
-              {children}
-              {/* <Footer /> */}
-            </MaintenanceCheck>
+          <CartProvider>
+            <WishlistProvider> {/* Wishlist Provider wrapped here */}
+              <MaintenanceCheck>
+                <Navbar />
+                {children}
+                {/* <Footer /> */}
+              </MaintenanceCheck>
+            </WishlistProvider>
           </CartProvider>
           <Toaster position="top-right" />
         </AuthProvider>

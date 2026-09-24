@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
   },
   shortDescription: String,
 
-  // Product Type (Expanded to support Physical, Digital & Website)
+  // Product Type (Physical, Digital & Website)
   productType: {
     type: String,
     enum: ['physical', 'digital', 'website'],
@@ -47,10 +47,10 @@ const productSchema = new mongoose.Schema({
     default: null
   },
 
-  // Physical Product Specific (Shipping & Weight)
+  // Physical Product Specific (Shipping, Weight & Stock)
   weight: {
-    type: Number,
-    default: 0 // কেজিতে ওজনের হিসাব (শিপিং চার্জের জন্য)
+    type: String,
+    default: null
   },
   dimensions: {
     length: Number,
@@ -59,7 +59,7 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    default: 0 // ফিজিক্যাল প্রোডাক্ট বা স্টক ম্যানেজমেন্টের জন্য
+    default: 0
   },
 
   tags: [String],
@@ -72,21 +72,22 @@ const productSchema = new mongoose.Schema({
   salePrice: Number,
   currency: {
     type: String,
-    default: 'BDT' // বাংলাদেশ কেন্দ্রিক কাজের জন্য ডিফল্ট BDT করা যেতে পারে
+    default: 'BDT'
   },
   discountPercent: {
     type: Number,
     default: 0
   },
 
-  // Files (For Digital Products)
+  // Files & Direct Install Info (For Digital Products)
   fileUrl: {
     type: String,
-    required: function() { return (this as any).productType === 'digital'; } // ডিজিটাল হলে ফাইল বাধ্যতামূলক
+    required: function() { return (this as any).productType === 'digital'; }
   },
   fileId: String,
   fileSize: String,
-  fileFormat: String,
+  fileFormat: String, // e.g., 'zip', 'apk', 'exe'
+  installUrl: String, // সরাসরি ইনস্টল লিঙ্ক বা ডিপ্লয়মেন্ট লিংক (যদি থাকে)
   
   // Media
   thumbnailUrl: String,
@@ -137,7 +138,7 @@ const productSchema = new mongoose.Schema({
     default: 0
   },
 
-  // Ratings (সংশোধিত অংশ)
+  // Ratings
   averageRating: {
     type: Number,
     default: 0

@@ -16,16 +16,18 @@ import {
   Globe,
   TrendingUp,
   Heart,
-  CheckCircle
+  Download
 } from 'lucide-react';
-import { formatNumber, calculateDiscount, calculateSaveAmount } from '@/lib/format';
+import { formatNumber, calculateDiscount } from '@/lib/format';
 
 interface HomeProductCardProps {
   product: {
     _id: string;
     title: string;
     category: string;
-    productType: string;
+    productType?: string;
+    isDigital?: boolean;
+    type?: string;
     price: number;
     salePrice: number | null;
     thumbnailUrl: string;
@@ -51,25 +53,37 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
   const { isAuthenticated } = useAuth();
   const [isWishlisted, setIsWishlisted] = React.useState(false);
 
+  // ডিজিটাল বা ফিজিক্যাল তা সঠিকভাবে শনাক্ত করার স্ট্রং লজিক
+  const isDigital = 
+    Boolean(product.isDigital) ||
+    product.productType?.toLowerCase() === 'digital' ||
+    product.type?.toLowerCase() === 'digital' ||
+    product.productType?.toLowerCase() === 'website';
+
+  // টাইপ অনুযায়ী সঠিক ইউআরএল সেট (ফিজিক্যাল প্রোডাক্টের জন্য /physical-products/ করা হলো)
+  const productDetailUrl = isDigital 
+    ? `/digital-products/${product._id}` 
+    : `/physical-products/${product._id}`;
+
   const discount = calculateDiscount(product.price, product.salePrice || 0);
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleAction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!isAuthenticated) {
-      toast.error('Please login to purchase');
-      router.push(`/login?redirect=/checkout/${product._id}`);
+      toast.error('Please login to proceed');
+      router.push(`/login?redirect=${productDetailUrl}`);
       return;
     }
     
-    router.push(`/checkout/${product._id}`);
+    router.push(productDetailUrl);
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all group border border-gray-100 flex flex-col">
-      {/* Image */}
-      <Link href={`/digital-products/${product._id}`} className="relative h-44 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block">
+      {/* Image Container */}
+      <Link href={productDetailUrl} className="relative h-44 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block">
         {product.thumbnailUrl ? (
           <img
             src={product.thumbnailUrl}
@@ -85,6 +99,13 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
             )}
           </div>
         )}
+
+        {/* Dynamic Type Tag */}
+        <span className={`absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded shadow ${
+          isDigital ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'
+        }`}>
+          {isDigital ? 'DIGITAL' : 'PHYSICAL'}
+        </span>
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -116,6 +137,7 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
         <button
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setIsWishlisted(!isWishlisted);
           }}
           className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -132,7 +154,7 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
         </span>
 
         {/* Title */}
-        <Link href={`/digital-products/${product._id}`}>
+        <Link href={productDetailUrl}>
           <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors leading-snug">
             {product.title}
           </h3>
@@ -159,7 +181,7 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
           </span>
         </div>
 
-        {/* Price & Buy */}
+        {/* Price & Action Button */}
         <div className="flex justify-between items-center mt-auto">
           <div>
             {product.salePrice ? (
@@ -173,11 +195,24 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
           </div>
 
           <button
-            onClick={handleBuyNow}
-            className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            title="Buy Now"
+            onClick={handleAction}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg text-white flex items-center gap-1.5 transition-colors ${
+              isDigital 
+                ? 'bg-indigo-600 hover:bg-indigo-700' 
+                : 'bg-amber-500 hover:bg-amber-600'
+            }`}
           >
-            <ShoppingCart className="w-4 h-4" />
+            {isDigital ? (
+              <>
+                <Download className="w-3.5 h-3.5" />
+                <span>Get / Install</span>
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-3.5 h-3.5" />
+                <span>Buy Now</span>
+              </>
+            )}
           </button>
         </div>
 

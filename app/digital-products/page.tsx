@@ -2,13 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import { 
   Search, 
-  ChevronDown,
   Loader2,
   Package,
-  SlidersHorizontal,
   X
 } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
@@ -55,7 +52,7 @@ export default function DigitalProductsPage() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit, sort };
+      const params: any = { page, limit, sort, type: 'digital' };
       
       if (search) params.search = search;
       if (selectedCategory !== 'all') params.category = selectedCategory;
@@ -67,11 +64,11 @@ export default function DigitalProductsPage() {
       const response = await axios.get('/api/products', { params });
       
       if (response.data.success) {
-        setProducts(response.data.data.products);
+        setProducts(response.data.data.products || []);
         setCategories(response.data.data.categories || []);
         setPriceRange(response.data.data.priceRange || { minPrice: 0, maxPrice: 0 });
-        setTotalPages(response.data.data.pagination.totalPages);
-        setTotalProducts(response.data.data.pagination.total);
+        setTotalPages(response.data.data.pagination?.totalPages || 1);
+        setTotalProducts(response.data.data.pagination?.total || 0);
         
         const filters: string[] = [];
         if (search) filters.push(`Search: ${search}`);
@@ -227,7 +224,7 @@ export default function DigitalProductsPage() {
                     <button
                       onClick={() => setPage(Math.max(1, page - 1))}
                       disabled={page === 1}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm disabled:opacity-50"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm disabled:opacity-50 bg-white"
                     >
                       Prev
                     </button>
@@ -238,7 +235,7 @@ export default function DigitalProductsPage() {
                         className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium ${
                           page === i + 1
                             ? 'bg-indigo-600 text-white'
-                            : 'border border-gray-300 text-gray-600'
+                            : 'border border-gray-300 text-gray-600 bg-white'
                         }`}
                       >
                         {i + 1}
@@ -247,7 +244,7 @@ export default function DigitalProductsPage() {
                     <button
                       onClick={() => setPage(Math.min(totalPages, page + 1))}
                       disabled={page === totalPages}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm disabled:opacity-50"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm disabled:opacity-50 bg-white"
                     >
                       Next
                     </button>
@@ -255,10 +252,10 @@ export default function DigitalProductsPage() {
                 )}
               </>
             ) : (
-              <div className="text-center py-20 bg-white rounded-xl">
+              <div className="text-center py-20 bg-white rounded-xl border">
                 <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900">No Products Found</h3>
-                <button onClick={handleClearFilters} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg">
+                <button onClick={handleClearFilters} className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">
                   Clear Filters
                 </button>
               </div>
