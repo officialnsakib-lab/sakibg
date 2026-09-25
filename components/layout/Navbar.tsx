@@ -7,8 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { useCurrency } from '@/context/CurrencyContext'; // কারেন্সি হুক ইমপোর্ট করা হয়েছে
-import { toast } from 'react-hot-toast';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function Navbar() {
   const router = useRouter();
@@ -17,7 +16,7 @@ export default function Navbar() {
   
   const { cart } = useCart();
   const { wishlist } = useWishlist();
-  const { currency, setCurrency } = useCurrency(); // কারেন্সি স্টেট এবং ফাংশন কল করা হয়েছে
+  const { currency, setCurrency } = useCurrency();
 
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -98,7 +97,7 @@ export default function Navbar() {
   }
   
   return (
-    <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
+    <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow w-full ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
       <div className="border-b border-amber-500/15">
         <div className="w-full px-2 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
@@ -331,9 +330,9 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Drawer (Fixed to display properly) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#070b12] border-t border-amber-500/15 px-4 py-4 space-y-4 shadow-2xl">
+        <div className="md:hidden absolute top-full left-0 w-full bg-[#070b12] border-t border-amber-500/15 px-4 py-5 space-y-4 shadow-2xl z-50 max-h-[calc(100vh-70px)] overflow-y-auto">
           <form onSubmit={handleSearch} className="flex gap-2">
             <input
               type="text"
