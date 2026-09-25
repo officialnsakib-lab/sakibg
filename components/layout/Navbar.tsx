@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext'; // Cart Context ইমপোর্ট
-import { useWishlist } from '@/context/WishlistContext'; // Wishlist Context ইমপোর্ট
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { toast } from 'react-hot-toast';
 
 export default function Navbar() {
@@ -14,14 +14,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, isAdmin, isVendor, logout, loading } = useAuth();
   
-  // Cart & Wishlist Context থেকে তথ্য আনা
   const { cart } = useCart();
   const { wishlist } = useWishlist();
 
-  // Hydration mismatch রোধ করতে client-side state
   const [mounted, setMounted] = useState(false);
-
-  // UI state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,14 +25,12 @@ export default function Navbar() {
   
   const userMenuRef = useRef<HTMLDivElement>(null);
   
-  // Hide navbar on vendor/admin pages
   const isDashboardPage = pathname.startsWith('/vendor') || pathname.startsWith('/admin');
 
   useEffect(() => {
     setMounted(true);
   }, []);
   
-  // Handle scroll for navbar shadow
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -46,7 +40,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Close user menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -58,13 +51,11 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
   }, [pathname]);
   
-  // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -73,13 +64,11 @@ export default function Navbar() {
     }
   };
   
-  // Handle logout
   const handleLogout = () => {
     setIsUserMenuOpen(false);
     logout();
   };
   
-  // Get user initials for avatar
   const getUserInitials = () => {
     if (!user?.name) return 'U';
     return user.name
@@ -90,22 +79,18 @@ export default function Navbar() {
       .slice(0, 2);
   };
   
-  // Get dashboard link based on role
   const getDashboardLink = () => {
     if (isAdmin) return '/admin/dashboard';
     if (isVendor) return '/vendor/dashboard';
     return '/dashboard';
   };
 
-  // মোট কার্ট আইটেমের সংখ্যা গণনা
   const totalCartItems = mounted && Array.isArray(cart) 
     ? cart.reduce((total, item) => total + (item.quantity || 1), 0)
     : 0;
 
-  // মোট উইশলিস্ট আইটেমের সংখ্যা গণনা
   const totalWishlistItems = mounted && Array.isArray(wishlist) ? wishlist.length : 0;
   
-  // If dashboard page, don't show navbar
   if (isDashboardPage) {
     return null;
   }
@@ -114,11 +99,12 @@ export default function Navbar() {
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
       <div className="border-b border-amber-500/15">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 flex items-center justify-between gap-2 sm:gap-4">
+        {/* এখানে mx-auto এবং সীমিত padding বাদ দিয়ে w-full এবং ছোট responsive padding দেওয়া হয়েছে যাতে লোগো একদম বামে থাকে */}
+        <div className="w-full px-2 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Custom Logo Image - Fully Responsive */}
+          {/* Custom Logo Image - Fully Left Aligned */}
           <Link href="/" className="flex items-center group shrink-0">
-            <div className="relative w-32 xs:w-36 sm:w-44 lg:w-48 h-10 xs:h-12 sm:h-14 overflow-hidden flex items-center justify-center">
+            <div className="relative w-32 xs:w-36 sm:w-44 lg:w-48 h-10 xs:h-12 sm:h-14 overflow-hidden flex items-center justify-start">
               <Image 
                 src="/tt.png" 
                 alt="Wahisnova IMEX Logo" 
@@ -171,7 +157,6 @@ export default function Navbar() {
                       </span>
                     </button>
                     
-                    {/* User dropdown */}
                     {isUserMenuOpen && (
                       <div className="absolute right-0 mt-2 w-56 bg-white text-neutral-800 rounded-xl shadow-2xl border border-amber-100 py-2 z-50">
                         <div className="px-4 py-3 border-b border-gray-100">
@@ -256,7 +241,7 @@ export default function Navbar() {
 
       {/* Sub Navbar Links & Global Shipping (Desktop) */}
       <div className="hidden md:block border-b border-amber-500/10 bg-[#05080e]">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 flex items-center justify-between h-12">
+        <div className="w-full px-4 lg:px-6 flex items-center justify-between h-12">
           
           <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto scrollbar-none">
             <Link 
@@ -335,7 +320,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer (Fully Responsive & Clean) */}
+      {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-[#070b12] border-t border-amber-500/15 px-4 py-4 space-y-4 shadow-2xl">
           <form onSubmit={handleSearch} className="flex gap-2">

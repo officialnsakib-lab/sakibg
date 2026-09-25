@@ -17,7 +17,7 @@ const heroSlides = [
     id: 1,
     title: "Grand Product Launch Special",
     subtitle: "Celebrate our brand new physical product launch with massive discounts.",
-    discount: "Flat 50% OFF",
+    discount: "Flat 30% OFF",
     firstTimeDiscount: "Extra 30% OFF on your first purchase!",
     buttonText: "Shop Products",
     buttonLink: "/physical-products",
@@ -32,7 +32,7 @@ const heroSlides = [
     buttonText: "Explore Templates",
     buttonLink: "/website-demos",
     badge: "Trending",
-    image: "/product-2.png"
+    image: "/product3.jpeg"
   },
   {
     id: 3,
@@ -52,17 +52,17 @@ const heroSlides = [
     buttonText: "Browse Design Assets",
     buttonLink: "/categories",
     badge: "Hot Deal",
-    image: "/product-4.png"
+    image: "/5.jpeg"
   },
   {
     id: 5,
-    title: "E-Commerce Source Codes",
-    subtitle: "Get fully functional, production-ready source codes to build your own scalable online business.",
-    discount: "Starting at $29 only",
-    buttonText: "View Source Codes",
-    buttonLink: "/digital-products",
-    badge: "Best Seller",
-    image: "/product-5.png"
+    title: "Start Your Business with Wahisnovaimex",
+    subtitle: "Launch your dream enterprise today with our expert-crafted solutions, professional tools, and reliable digital guidance designed for growth.",
+    discount: "Kickstart Today",
+    buttonText: "Get Started Now",
+    buttonLink: "/start-business",
+    badge: "Exclusive Offer",
+    image: "/rr.jpeg"
   },
   {
     id: 6,
@@ -72,7 +72,7 @@ const heroSlides = [
     buttonText: "Get Started Now",
     buttonLink: "/search",
     badge: "Value Pack",
-    image: "/product-6.png"
+    image: "/4.jpeg"
   }
 ];
 
