@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext'; // Cart Provider imported
 import { WishlistProvider } from '@/context/WishlistContext'; // Wishlist Provider imported
+import { CurrencyProvider } from '@/context/CurrencyContext'; // Currency Provider imported
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from 'react-hot-toast';
@@ -26,12 +27,14 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           <CartProvider>
-            <WishlistProvider> {/* Wishlist Provider wrapped here */}
-              <MaintenanceCheck>
-                <Navbar />
-                {children}
-                {/* <Footer /> */}
-              </MaintenanceCheck>
+            <WishlistProvider>
+              <CurrencyProvider> {/* Currency Provider wrapped here */}
+                <MaintenanceCheck>
+                  <Navbar />
+                  {children}
+                  {/* <Footer /> */}
+                </MaintenanceCheck>
+              </CurrencyProvider>
             </WishlistProvider>
           </CartProvider>
           <Toaster position="top-right" />

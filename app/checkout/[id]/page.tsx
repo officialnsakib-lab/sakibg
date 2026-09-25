@@ -53,17 +53,16 @@ export default function CheckoutPage() {
     deliveryArea: 'inside_dhaka',
   });
 
-  // Fetch product if direct URL purchase
+  // Fetch product if direct URL purchase (এখানে আপডেট করা হয়েছে)
   useEffect(() => {
     if (routeProductId) {
       axios.get(`/api/products/${routeProductId}`)
         .then(res => {
-          if (res.data?.product) {
-            setProductData(res.data.product);
-          } else if (res.data?.data) {
-            setProductData(res.data.data);
+          const responseData = res.data?.data || res.data;
+          if (responseData?.product) {
+            setProductData(responseData.product);
           } else {
-            setProductData(res.data);
+            setProductData(responseData);
           }
         })
         .catch(err => console.error('Fetch product error:', err))

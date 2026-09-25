@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হয়েছে
 import { toast } from 'react-hot-toast';
 import { 
   Star, 
@@ -36,6 +37,7 @@ interface ProductCardProps {
     price: number;
     salePrice: number | null;
     thumbnailUrl: string;
+    images?: string[];
     averageRating: number;
     totalReviews: number;
     sales: number;
@@ -60,6 +62,16 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
+  const { formatPrice } = useCurrency(); // ২. হুক কল করা হয়েছে
+
+  // হোভার বা গ্যালারি ছবি পরিবর্তনের জন্য স্টেট
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // থাম্বনেইল এবং গ্যালারি ইমেজগুলো মিলিয়ে একটি লিস্ট তৈরি করা
+  const allImages = [
+    product.thumbnailUrl,
+    ...(product.images || [])
+  ].filter(Boolean);
 
   const isLoved = isInWishlist(product._id);
 
@@ -74,17 +86,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const salePrice = product.salePrice ? Number(product.salePrice) : originalPrice;
 
   const discount = calculateDiscount(originalPrice, salePrice);
-
-  const getAge = (date: string) => {
-    if (!date) return 'Recently';
-    const diff = Date.now() - new Date(date).getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days <= 0) return 'Today';
-    if (days === 1) return '1d ago';
-    if (days < 30) return `${days}d ago`;
-    const months = Math.floor(days / 30);
-    return `${months}mo ago`;
-  };
 
   const handleInstallAndGet = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -123,14 +124,36 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all group border border-gray-100 flex flex-col justify-between w-full">
       <div>
-        {/* Image Section: Mobile এ উচ্চতা ছোট (h-32) এবং Desktop এ স্বাভাবিক (sm:h-44) রাখা হয়েছে */}
-        <Link href={productDetailPageUrl} className="relative h-32 sm:h-44 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block w-full">
-          {product.thumbnailUrl ? (
-            <img
-              src={product.thumbnailUrl}
-              alt={product.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
+        {/* Image Section */}
+        <Link 
+          href={productDetailPageUrl} 
+          className="relative h-32 sm:h-44 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block w-full"
+        >
+          {allImages.length > 0 ? (
+            <div className="w-full h-full relative">
+              <img
+                src={allImages[currentImageIndex] || allImages[0]}
+                alt={product.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+
+              {allImages.length > 1 && (
+                <div 
+                  className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1 z-10 bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm"
+                  onMouseEnter={(e) => e.preventDefault()}
+                >
+                  {allImages.slice(0, 4).map((_, idx) => (
+                    <span
+                      key={idx}
+                      onMouseEnter={() => setCurrentImageIndex(idx)}
+                      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all cursor-pointer ${
+                        currentImageIndex === idx ? 'bg-white w-3 sm:w-4' : 'bg-white/60'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Package className="w-8 h-8 sm:w-12 sm:h-12 text-white/50" />
@@ -171,9 +194,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           </button>
         </Link>
 
-        {/* Content Section: মোবাইলের জন্য প্যাডিং কমানো হয়েছে (p-2 sm:p-4) */}
+        {/* Content Section */}
         <div className="p-2 sm:p-4">
-          {/* Category & Verified */}
           <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
             <span className="text-[9px] sm:text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 sm:px-2 py-0.5 rounded-full truncate">
               {product.category || 'General'}
@@ -185,7 +207,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          {/* Title: মোবাইলে ফন্ট ছোট ও এক লাইনে রাখা হয়েছে */}
           <Link href={productDetailPageUrl}>
             <h3 className="font-bold text-gray-900 text-xs sm:text-base mb-1 sm:mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors leading-tight">
               {product.title}
@@ -214,20 +235,20 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          {/* Pricing */}
+          {/* Pricing (৩. formatPrice ব্যবহার করে ডাইনামিক কারেন্সি দেখানো হচ্ছে) */}
           <div className="mb-2 sm:mb-4">
             {product.salePrice && salePrice < originalPrice ? (
               <div className="flex items-baseline gap-1 sm:gap-2">
-                <span className="text-sm sm:text-2xl font-extrabold text-indigo-600 leading-none">
-                  ${salePrice}
+                <span className="text-sm sm:text-xl font-extrabold text-indigo-600 leading-none">
+                  {formatPrice(salePrice)}
                 </span>
-                <span className="text-[10px] sm:text-sm text-gray-400 line-through">
-                  ${originalPrice}
+                <span className="text-[10px] sm:text-xs text-gray-400 line-through">
+                  {formatPrice(originalPrice)}
                 </span>
               </div>
             ) : (
-              <span className="text-sm sm:text-2xl font-extrabold text-indigo-600 leading-none">
-                ${originalPrice}
+              <span className="text-sm sm:text-xl font-extrabold text-indigo-600 leading-none">
+                {formatPrice(originalPrice)}
               </span>
             )}
           </div>
@@ -236,7 +257,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Footer Actions & Vendor */}
       <div className="p-2 sm:p-4 pt-0 mt-auto">
-        {/* Buttons: মোবাইলে ছোট ফন্ট ও কম প্যাডিং দিয়ে বাটন ফিট করা হয়েছে */}
         <div className="mb-2">
           {isDigital ? (
             <div className="grid grid-cols-2 gap-1 sm:gap-2">

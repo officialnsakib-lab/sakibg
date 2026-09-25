@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useCurrency } from '@/context/CurrencyContext'; // কারেন্সি হুক ইমপোর্ট করা হয়েছে
 import { toast } from 'react-hot-toast';
 
 export default function Navbar() {
@@ -16,6 +17,7 @@ export default function Navbar() {
   
   const { cart } = useCart();
   const { wishlist } = useWishlist();
+  const { currency, setCurrency } = useCurrency(); // কারেন্সি স্টেট এবং ফাংশন কল করা হয়েছে
 
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -99,10 +101,9 @@ export default function Navbar() {
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
       <div className="border-b border-amber-500/15">
-        {/* এখানে mx-auto এবং সীমিত padding বাদ দিয়ে w-full এবং ছোট responsive padding দেওয়া হয়েছে যাতে লোগো একদম বামে থাকে */}
         <div className="w-full px-2 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Custom Logo Image - Fully Left Aligned */}
+          {/* Custom Logo Image */}
           <Link href="/" className="flex items-center group shrink-0">
             <div className="relative w-32 xs:w-36 sm:w-44 lg:w-48 h-10 xs:h-12 sm:h-14 overflow-hidden flex items-center justify-start">
               <Image 
@@ -137,9 +138,19 @@ export default function Navbar() {
             </form>
           </div>
 
-          {/* Right Action Icons */}
+          {/* Right Action Icons & Currency Switcher */}
           <div className="flex items-center gap-1 sm:gap-2.5 lg:gap-3 shrink-0">
             
+            {/* Currency Selector Dropdown */}
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as 'BDT' | 'USD')}
+              className="bg-neutral-800 text-amber-300 border border-amber-500/30 text-xs sm:text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer font-semibold"
+            >
+              <option value="USD" className="bg-neutral-900 text-white">USD ($)</option>
+              <option value="BDT" className="bg-neutral-900 text-white">BDT (৳)</option>
+            </select>
+
             {/* Auth / Profile Area */}
             {!loading && (
               <>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
 import { toast } from 'react-hot-toast';
 import { 
   Loader2,
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const { cart, totalAmount, clearCart } = useCart();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { currency, exchangeRate, formatPrice, convertPrice } = useCurrency(); // ২. হুক কল করা হলো
   
   // URL Query Parameters
   const queryProductId = searchParams.get('id') || searchParams.get('productId');
@@ -58,10 +60,9 @@ export default function CheckoutPage() {
     if (queryProductId) {
       axios.get(`/api/products/${queryProductId}`)
         .then(res => {
-          if (res.data?.product) {
-            setDirectProduct(res.data.product);
-          } else if (res.data?.data) {
-            setDirectProduct(res.data.data);
+          const productData = res.data?.data?.product || res.data?.product || res.data?.data;
+          if (productData) {
+            setDirectProduct(productData);
           }
         })
         .catch(err => console.error('Fetch product error:', err))
@@ -82,12 +83,17 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  // Calculations
-  const checkoutPrice = directProduct 
+  // Calculations with currency conversion
+  const rawCheckoutPrice = directProduct 
     ? (directProduct.salePrice || directProduct.price || 0) 
     : totalAmount;
 
-  const deliveryCharge = isDigital ? 0 : (shippingAddress.deliveryArea === 'inside_dhaka' ? 60 : 120);
+  const checkoutPrice = convertPrice(rawCheckoutPrice);
+  
+  // ডেলিভারি চার্জ হিসাব (BDT হলে নির্দিষ্ট টাকা, USD হলে এক্সচেঞ্জ রেট দিয়ে ভাগ)
+  const baseDeliveryCharge = shippingAddress.deliveryArea === 'inside_dhaka' ? 60 : 120;
+  const deliveryCharge = currency === 'BDT' ? baseDeliveryCharge : baseDeliveryCharge / exchangeRate;
+  
   const finalTotalAmount = checkoutPrice + deliveryCharge;
 
   const paymentInfo = {
@@ -188,6 +194,8 @@ export default function CheckoutPage() {
         shippingAddress: isDigital ? null : shippingAddress,
         deliveryCharge,
         totalAmount: finalTotalAmount,
+        currency,
+        exchangeRate,
         paymentMethod,
         productType: isDigital ? 'digital' : 'physical',
         transactionId: paymentMethod !== 'cod' ? transactionId.trim() : undefined,
@@ -273,7 +281,7 @@ export default function CheckoutPage() {
         <form onSubmit={handlePurchase} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6">
             
-            {/* SHIPPING ADDRESS SECTION - ONLY SHOW FOR PHYSICAL PRODUCTS */}
+            {/* SHIPPING ADDRESS SECTION */}
             {!isDigital ? (
               <div className="bg-white rounded-xl shadow-sm p-6 border">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -291,8 +299,8 @@ export default function CheckoutPage() {
                       onChange={handleShippingChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
                     >
-                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: ৳60)</option>
-                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: ৳120)</option>
+                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(currency === 'BDT' ? 60 : 60 / exchangeRate)})</option>
+                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(currency === 'BDT' ? 120 : 120 / exchangeRate)})</option>
                     </select>
                   </div>
 
@@ -421,7 +429,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="bg-gray-50 rounded-lg p-4 border">
                     <p className="text-sm font-semibold text-gray-900 mb-2">
-                      Step 1: Send ${finalTotalAmount.toFixed(2)} to our {paymentMethod} merchant number
+                      Step 1: Send {formatPrice(finalTotalAmount)} to our {paymentMethod} merchant number
                     </p>
                     <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
                       <span className="font-mono font-semibold text-gray-900">
@@ -478,7 +486,7 @@ export default function CheckoutPage() {
                 {directProduct ? (
                   <div className="flex justify-between items-center text-sm border-b pb-2">
                     <span className="font-medium text-gray-800 line-clamp-1">{directProduct.title}</span>
-                    <span className="font-semibold text-gray-900">${(directProduct.salePrice || directProduct.price).toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(directProduct.salePrice || directProduct.price || 0)}</span>
                   </div>
                 ) : (
                   cart.map((item: any) => (
@@ -487,7 +495,7 @@ export default function CheckoutPage() {
                         <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
                         <span className="text-gray-500">x{item.quantity}</span>
                       </div>
-                      <span className="font-semibold text-gray-900">${((item.salePrice || item.price) * item.quantity).toFixed(2)}</span>
+                      <span className="font-semibold text-gray-900">{formatPrice((item.salePrice || item.price || 0) * item.quantity)}</span>
                     </div>
                   ))
                 )}
@@ -496,19 +504,19 @@ export default function CheckoutPage() {
               <div className="border-t pt-3 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>${checkoutPrice.toFixed(2)}</span>
+                  <span>{formatPrice(checkoutPrice)}</span>
                 </div>
 
                 {!isDigital && (
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping ({shippingAddress.deliveryArea === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})</span>
-                    <span className="text-gray-900 font-medium">${deliveryCharge.toFixed(2)}</span>
+                    <span className="text-gray-900 font-medium">{formatPrice(deliveryCharge)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2">
                   <span>Total</span>
-                  <span className="text-indigo-600">${finalTotalAmount.toFixed(2)}</span>
+                  <span className="text-indigo-600">{formatPrice(finalTotalAmount)}</span>
                 </div>
               </div>
 
@@ -522,7 +530,7 @@ export default function CheckoutPage() {
                     <Loader2 className="w-5 h-5 animate-spin" /> Processing...
                   </>
                 ) : (
-                  isDigital ? `Pay & Get Instant Access - $${finalTotalAmount.toFixed(2)}` : `Place Order - $${finalTotalAmount.toFixed(2)}`
+                  isDigital ? `Pay & Get Instant Access - ${formatPrice(finalTotalAmount)}` : `Place Order - ${formatPrice(finalTotalAmount)}`
                 )}
               </button>
             </div>
