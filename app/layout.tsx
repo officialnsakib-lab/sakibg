@@ -13,11 +13,14 @@ import MaintenanceCheck from '@/components/MaintenanceCheck';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Wahisnova - Digital Marketplace',
+  title: 'Wahisnova - Your Custom Title Here', // <--- এখানে টাইটেল পরিবর্তন করুন
   description: 'Buy and sell digital products and website templates',
+  icons: {
+    icon: '/favicon.png', // <--- public/ ফোল্ডারে রাখা আপনার লোগোর ফাইল নেম
+  },
 };
 
-// Next.js App Router-এ ভিউপোর্ট আলাদাভাবে এক্সপোর্ট করতে হয়
+// Next.js App Router-এ ভিউপোর্ট আলাদাভাবে এক্সপোর্ট করতে হয়
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
