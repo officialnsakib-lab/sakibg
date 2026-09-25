@@ -100,11 +100,11 @@ export default function Navbar() {
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow w-full ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
       <div className="border-b border-amber-500/15">
-        <div className="w-full px-2 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="w-full px-2 sm:px-4 lg:px-6 py-2.5 flex items-center justify-between gap-1 sm:gap-3">
           
           {/* Custom Logo Image */}
           <Link href="/" className="flex items-center group shrink-0">
-            <div className="relative w-32 xs:w-36 sm:w-44 lg:w-48 h-10 xs:h-12 sm:h-14 overflow-hidden flex items-center justify-start">
+            <div className="relative w-28 xs:w-32 sm:w-40 lg:w-48 h-9 xs:h-10 sm:h-12 overflow-hidden flex items-center justify-start">
               <Image 
                 src="/tt.png" 
                 alt="Wahisnova IMEX Logo" 
@@ -138,13 +138,13 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Icons & Currency Switcher */}
-          <div className="flex items-center gap-1 sm:gap-2.5 lg:gap-3 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
             {/* Currency Selector Dropdown */}
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as 'BDT' | 'USD')}
-              className="bg-neutral-800 text-amber-300 border border-amber-500/30 text-xs sm:text-sm rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer font-semibold"
+              className="bg-neutral-800 text-amber-300 border border-amber-500/30 text-[11px] sm:text-sm rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer font-semibold"
             >
               <option value="USD" className="bg-neutral-900 text-white">USD ($)</option>
               <option value="BDT" className="bg-neutral-900 text-white">BDT (৳)</option>
@@ -157,9 +157,9 @@ export default function Navbar() {
                   <div className="relative" ref={userMenuRef}>
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center gap-1.5 p-1 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-amber-500/30"
+                      className="flex items-center gap-1 p-1 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-amber-500/30"
                     >
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-sm">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-tr from-amber-600 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
                         {getUserInitials()}
                       </div>
                       <span className="hidden lg:block text-sm font-medium text-amber-100 max-w-[100px] truncate">
@@ -195,9 +195,9 @@ export default function Navbar() {
                 ) : (
                   <Link
                     href="/login"
-                    className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-amber-100 hover:text-amber-400 transition-colors px-2 py-1.5 rounded-lg hover:bg-white/5"
+                    className="flex items-center gap-1 text-xs font-medium text-amber-100 hover:text-amber-400 transition-colors px-1.5 py-1 rounded hover:bg-white/5"
                   >
-                    <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span className="hidden sm:inline">Login</span>
@@ -207,24 +207,24 @@ export default function Navbar() {
             )}
 
             {/* Wishlist Icon */}
-            <Link href="/wishlist" className="relative p-1.5 sm:p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded-lg hover:bg-white/5" aria-label="Wishlist">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Link href="/wishlist" className="relative p-1 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded hover:bg-white/5" aria-label="Wishlist">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               {totalWishlistItems > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
                   {totalWishlistItems}
                 </span>
               )}
             </Link>
 
             {/* Cart Icon */}
-            <Link href="/cart" className="relative p-1.5 sm:p-2 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded-lg hover:bg-white/5" aria-label="Cart">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Link href="/cart" className="relative p-1 text-amber-100 hover:text-amber-400 transition-colors flex items-center rounded hover:bg-white/5" aria-label="Cart">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H19m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {totalCartItems > 0 && (
-                <span className="absolute top-0 right-0 bg-amber-400 text-neutral-950 font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-amber-400 text-neutral-950 font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
                   {totalCartItems}
                 </span>
               )}
@@ -233,7 +233,7 @@ export default function Navbar() {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-1.5 text-amber-100 hover:text-amber-400 rounded-lg hover:bg-white/5 transition-colors"
+              className="md:hidden p-1 text-amber-100 hover:text-amber-400 rounded transition-colors"
               aria-label="Toggle Menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
