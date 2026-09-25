@@ -10,24 +10,9 @@ import {
   X, 
   Image as ImageIcon, 
   Loader2,
-  CheckCircle,
   Package,
   Box,
-  Globe,
-  Info,
-  Star,
-  FileText,
-  Link as LinkIcon,
-  Tag,
-  DollarSign,
-  Layers,
-  ListChecks,
-  Settings,
-  Video,
-  BadgeCheck,
-  Award,
-  Sparkles,
-  Check
+  Award
 } from 'lucide-react';
 
 export default function UploadProductPage() {
@@ -65,6 +50,10 @@ export default function UploadProductPage() {
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   
+  // Product Gallery State
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+  
   // SEO
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
@@ -78,6 +67,7 @@ export default function UploadProductPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // ============ CATEGORIES ============
   const digitalCategories = [
@@ -95,7 +85,7 @@ export default function UploadProductPage() {
     if (title && !metaTitle) setMetaTitle(title);
     if (shortDescription && !metaDescription) setMetaDescription(shortDescription);
     if (tags && !keywords) setKeywords(tags);
-  }, [title, shortDescription, tags]);
+  }, [title, shortDescription, tags, metaTitle, metaDescription, keywords]);
 
   // ============ FILE HANDLERS ============
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +96,7 @@ export default function UploadProductPage() {
         return;
       }
       setFile(selectedFile);
-      if (errors.file) setErrors({ ...errors, file: undefined });
+      if (errors.file) setErrors({ ...errors, file: '' });
     }
   };
 
@@ -120,6 +110,29 @@ export default function UploadProductPage() {
       setThumbnail(selectedFile);
       setThumbnailPreview(URL.createObjectURL(selectedFile));
     }
+  };
+
+  const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFilesArray = Array.from(files);
+      const validFiles = newFilesArray.filter(fileItem => {
+        if (fileItem.size > 5 * 1024 * 1024) {
+          toast.error(`${fileItem.name} is too large (Max 5MB)`);
+          return false;
+        }
+        return true;
+      });
+
+      setGalleryImages(prev => [...prev, ...validFiles]);
+      const newPreviews = validFiles.map(fileItem => URL.createObjectURL(fileItem));
+      setGalleryPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryImages(prev => prev.filter((_, i) => i !== index));
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -136,7 +149,7 @@ export default function UploadProductPage() {
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile) {
       setFile(droppedFile);
-      if (errors.file) setErrors({ ...errors, file: undefined });
+      if (errors.file) setErrors({ ...errors, file: '' });
     }
   };
 
@@ -146,7 +159,6 @@ export default function UploadProductPage() {
     
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!description.trim()) newErrors.description = 'Description is required';
-    // Price 0-এর ক্ষেত্রেও যাতে ভ্যালিড থাকে (যেমন ফ্রি প্রোডাক্ট)
     if (price === '' || isNaN(parseFloat(price))) newErrors.price = 'Valid price is required';
     if (!file) newErrors.file = 'Product file is required';
     if (productType === 'physical' && (!stockQuantity || parseInt(stockQuantity) < 0)) {
@@ -155,6 +167,25 @@ export default function UploadProductPage() {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // ============ CLOUDINARY UPLOAD HELPER ============
+  const uploadToCloudinary = async (fileToUpload: File) => {
+    const data = new FormData();
+    data.append('file', fileToUpload);
+    data.append('upload_preset', 'wahisnovaimex'); // সঠিক Unsigned প্রিসেটের নাম দেওয়া হলো
+
+    const cloudName = 'momlcc6a'; 
+    try {
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        data
+      );
+      return res.data.secure_url;
+    } catch (err: any) {
+      console.error('Cloudinary Upload Error Details:', err.response?.data);
+      throw new Error(err.response?.data?.error?.message || 'Failed to upload file to Cloudinary');
+    }
   };
 
   // ============ SUBMIT ============
@@ -167,76 +198,83 @@ export default function UploadProductPage() {
     }
     
     setLoading(true);
-    setUploadProgress(0);
+    setUploadProgress(10);
     
     try {
-      const formData = new FormData();
-      
-      // Required
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('category', category);
-      formData.append('price', price);
-      formData.append('productType', productType);
-      
-      // Optional
-      formData.append('shortDescription', shortDescription);
-      formData.append('subCategory', subCategory);
-      formData.append('salePrice', salePrice || '');
-      formData.append('tags', tags);
-      formData.append('features', features);
-      formData.append('requirements', requirements);
-      formData.append('demoUrl', demoUrl);
-      formData.append('videoUrl', videoUrl);
-      formData.append('version', version || '1.0.0');
-      formData.append('documentation', documentation);
-      
-      // Physical specific
-      if (productType === 'physical') {
-        formData.append('stockQuantity', stockQuantity);
-        formData.append('sku', sku);
-        formData.append('weight', weight);
-        formData.append('dimensions', dimensions);
+      // ১. মেইন প্রোডাক্ট ফাইল ক্লাউডিনারিতে আপলোড
+      let fileUrl = '';
+      if (file) {
+        fileUrl = await uploadToCloudinary(file);
+        setUploadProgress(40);
       }
-      
-      // Premium
-      formData.append('isPremium', String(isPremium));
-      
-      // SEO
-      formData.append('metaTitle', metaTitle || title);
-      formData.append('metaDescription', metaDescription || shortDescription || description.substring(0, 160));
-      formData.append('keywords', keywords || tags);
-      
-      // Files
-      if (file) formData.append('file', file);
-      if (thumbnail) formData.append('thumbnail', thumbnail);
-      
-      const response = await axios.post('/api/products/upload', formData, {
+
+      // ২. থাম্বনেইল ইমেজ ক্লাউডিনারিতে আপলোড
+      let thumbnailUrl = '';
+      if (thumbnail) {
+        thumbnailUrl = await uploadToCloudinary(thumbnail);
+        setUploadProgress(60);
+      }
+
+      // ৩. গ্যালারি ইমেজগুলো আপলোড
+      const galleryUrls = [];
+      for (let i = 0; i < galleryImages.length; i++) {
+        const url = await uploadToCloudinary(galleryImages[i]);
+        galleryUrls.push(url);
+        setUploadProgress(60 + Math.round(((i + 1) / galleryImages.length) * 30));
+      }
+
+      setUploadProgress(95);
+
+      // ৪. ব্যাকএন্ডে JSON পে-লোড পাঠানো
+      const payload = {
+        title,
+        description,
+        shortDescription,
+        productType,
+        category,
+        subCategory,
+        price: parseFloat(price),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
+        tags: tags ? tags.split(',').map(t => t.trim()) : [],
+        features: features ? features.split(',').map(f => f.trim()) : [],
+        requirements: requirements ? requirements.split(',').map(r => r.trim()) : [],
+        demoUrl,
+        videoUrl,
+        version: version || '1.0.0',
+        documentation,
+        stockQuantity: productType === 'physical' ? parseInt(stockQuantity || '0') : 0,
+        sku,
+        weight,
+        dimensions,
+        isPremium,
+        fileUrl,
+        thumbnailUrl,
+        images: galleryUrls
+      };
+
+      const response = await axios.post('/api/products/upload', payload, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total || 1)
-          );
-          setUploadProgress(percentCompleted);
         }
       });
       
+      setUploadProgress(100);
       if (response.data.success) {
         toast.success('Product submitted for review!');
         router.push('/vendor/products');
       }
     } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error(error.response?.data?.error || 'Upload failed');
+      const errorMessage = typeof error.message === 'string' 
+        ? error.message 
+        : error.response?.data?.error || 'Upload failed';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // ============ RENDER ============
   return (
     <div className="max-w-5xl mx-auto pb-12">
       <div className="mb-8">
@@ -309,7 +347,7 @@ export default function UploadProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Short Description <span className="text-xs text-gray-400">(Optional)</span>
+                Short Description
               </label>
               <input
                 type="text"
@@ -352,7 +390,9 @@ export default function UploadProductPage() {
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
               >
                 {(productType === 'digital' ? digitalCategories : physicalCategories).map((cat) => (
-                  <option key={cat} value={cat}>{cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+                  <option key={cat} value={cat}>
+                    {cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                  </option>
                 ))}
               </select>
             </div>
@@ -375,7 +415,7 @@ export default function UploadProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sale Price <span className="text-xs text-gray-400">(Optional)</span>
+                Sale Price
               </label>
               <input
                 type="number"
@@ -391,7 +431,7 @@ export default function UploadProductPage() {
 
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags <span className="text-xs text-gray-400">(Optional - comma separated)</span>
+              Tags (comma separated)
             </label>
             <input
               type="text"
@@ -425,9 +465,7 @@ export default function UploadProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  SKU (Stock Keeping Unit) <span className="text-xs text-gray-400">(Optional)</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
                 <input
                   type="text"
                   value={sku}
@@ -438,9 +476,7 @@ export default function UploadProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Weight <span className="text-xs text-gray-400">(Optional)</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Weight</label>
                 <input
                   type="text"
                   value={weight}
@@ -451,9 +487,7 @@ export default function UploadProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dimensions <span className="text-xs text-gray-400">(Optional)</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dimensions</label>
                 <input
                   type="text"
                   value={dimensions}
@@ -508,11 +542,7 @@ export default function UploadProductPage() {
 
         {/* Thumbnail */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            Product Thumbnail <span className="text-gray-400 text-xs">(Optional)</span>
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Upload an eye-catching preview image (Max 5MB).</p>
-          
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Thumbnail</h2>
           <div className="flex items-center gap-6">
             {thumbnailPreview ? (
               <div className="relative">
@@ -536,6 +566,34 @@ export default function UploadProductPage() {
             )}
             <input ref={thumbnailInputRef} type="file" onChange={handleThumbnailSelect} className="hidden" accept="image/*" />
           </div>
+        </div>
+
+        {/* Gallery Images */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Gallery Images</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            {galleryPreviews.map((preview, index) => (
+              <div key={index} className="relative w-full h-28 rounded-lg border overflow-hidden group">
+                <img src={preview} alt={`Gallery ${index}`} className="w-full h-28 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeGalleryImage(index)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            
+            <div 
+              onClick={() => galleryInputRef.current?.click()}
+              className="w-full h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 bg-gray-50"
+            >
+              <ImageIcon className="w-6 h-6 text-gray-400" />
+              <span className="text-xs text-gray-500 mt-1">Add More</span>
+            </div>
+          </div>
+          <input ref={galleryInputRef} type="file" multiple accept="image/*" onChange={handleGallerySelect} className="hidden" />
         </div>
 
         {/* Premium Toggle */}
@@ -563,7 +621,7 @@ export default function UploadProductPage() {
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div className="bg-indigo-600 h-2.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
             </div>
-            <p className="text-sm text-gray-500 mt-2">{uploadProgress}% uploaded...</p>
+            <p className="text-sm text-gray-500 mt-2">{uploadProgress}% uploading...</p>
           </div>
         )}
 
