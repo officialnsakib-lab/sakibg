@@ -18,10 +18,11 @@ import {
   Settings,
   Globe
 } from 'lucide-react';
+import HeroSlider from '@/components/home/HeroSlider'; // 👈 হিরো স্লাইডার কম্পোনেন্ট ইমপোর্ট করা হয়েছে
 import HomeCategories from '@/components/home/HomeCategories';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import PopularProducts from '@/components/home/PopularProducts';
-import Footer from '@/components/layout/Footer'; // 👈 Footer Import করা হয়েছে
+import Footer from '@/components/layout/Footer';
 
 export default function HomePage() {
   const router = useRouter();
@@ -38,30 +39,21 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#070b12] text-white flex flex-col justify-between">
       
       <div>
-        {/* 1. Hero Section with Pure Background Image Only */}
-        <section 
-          className="relative overflow-hidden bg-cover bg-center bg-no-repeat pt-16 pb-24" 
-          style={{ backgroundImage: "url('/rr.jpeg')" }}
-        >
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-3xl text-left space-y-6">
+        {/* 1. Hero Section with Responsive Slider & Search Bar */}
+        <section className="pt-6 pb-12 bg-[#070b12]">
+          <div className="container mx-auto px-4">
+            
+            {/* রেসপন্সিভ হিরো স্লাইডার (এখানে প্রতিদিন অফার আপডেট করতে পারবেন) */}
+            <HeroSlider />
+
+            {/* স্লাইডারের নিচে সার্চ বার ও স্ট্যাটস হাইলাইটস */}
+            <div className="mt-8 max-w-3xl space-y-6">
               
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                 Digital Multi-Vendor Marketplace
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1]">
-                More Choices <br />
-                <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-                  More Possibilities
-                </span>
-              </h1>
-
-              <p className="text-gray-100 text-sm sm:text-base max-w-xl leading-relaxed drop-shadow-md">
-                Discover top products from multiple trusted vendors — all in one place. Shop smart, shop with confidence at Wahisnova IMEX.
-              </p>
-              
               {/* Search Bar */}
               <form onSubmit={handleSearch} className="max-w-xl">
                 <div className="flex gap-2 bg-white rounded-2xl p-2 shadow-2xl">
