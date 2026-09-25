@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   description: 'Buy and sell digital products and website templates',
 };
 
+// Next.js App Router-এ ভিউপোর্ট আলাদাভাবে এক্সপোর্ট করতে হয়
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -24,6 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* অতিরিক্ত নিরাপত্তার জন্য ভিউপোর্ট মেটা ট্যাগ */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           <CartProvider>
