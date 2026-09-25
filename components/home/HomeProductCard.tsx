@@ -53,14 +53,12 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
   const { isAuthenticated } = useAuth();
   const [isWishlisted, setIsWishlisted] = React.useState(false);
 
-  // ডিজিটাল বা ফিজিক্যাল তা সঠিকভাবে শনাক্ত করার স্ট্রং লজিক
   const isDigital = 
     Boolean(product.isDigital) ||
     product.productType?.toLowerCase() === 'digital' ||
     product.type?.toLowerCase() === 'digital' ||
     product.productType?.toLowerCase() === 'website';
 
-  // টাইপ অনুযায়ী সঠিক ইউআরএল সেট (ফিজিক্যাল প্রোডাক্টের জন্য /physical-products/ করা হলো)
   const productDetailUrl = isDigital 
     ? `/digital-products/${product._id}` 
     : `/physical-products/${product._id}`;
@@ -81,122 +79,109 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all group border border-gray-100 flex flex-col">
-      {/* Image Container */}
-      <Link href={productDetailUrl} className="relative h-44 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block">
-        {product.thumbnailUrl ? (
-          <img
-            src={product.thumbnailUrl}
-            alt={product.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            {product.productType === 'website' ? (
-              <Globe className="w-12 h-12 text-white/50" />
-            ) : (
-              <Package className="w-12 h-12 text-white/50" />
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all group border border-gray-100 flex flex-col justify-between w-full">
+      <div>
+        {/* Image Container: মোবাইল স্ক্রিনে উচ্চতা আরও কমিয়ে h-24 করা হয়েছে */}
+        <Link href={productDetailUrl} className="relative h-24 sm:h-40 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block w-full">
+          {product.thumbnailUrl ? (
+            <img
+              src={product.thumbnailUrl}
+              alt={product.title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              {product.productType === 'website' ? (
+                <Globe className="w-6 h-6 sm:w-10 sm:h-10 text-white/50" />
+              ) : (
+                <Package className="w-6 h-6 sm:w-10 sm:h-10 text-white/50" />
+              )}
+            </div>
+          )}
+
+          {/* Dynamic Type Tag */}
+          <span className={`absolute bottom-1 left-1 text-[8px] sm:text-[10px] font-bold px-1 py-0.5 rounded shadow ${
+            isDigital ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'
+          }`}>
+            {isDigital ? 'DIGITAL' : 'PHYSICAL'}
+          </span>
+
+          {/* Badges */}
+          <div className="absolute top-1 left-1 flex flex-col gap-0.5">
+            {product.isPremium && (
+              <span className="px-1 py-0.5 bg-yellow-400 text-yellow-900 text-[8px] sm:text-[10px] font-bold rounded flex items-center gap-0.5 shadow">
+                <Award className="w-2.5 h-2.5" /> PREMIUM
+              </span>
+            )}
+            {product.isFeatured && (
+              <span className="px-1 py-0.5 bg-purple-500 text-white text-[8px] sm:text-[10px] font-bold rounded flex items-center gap-0.5 shadow">
+                <Sparkles className="w-2.5 h-2.5" /> FEATURED
+              </span>
             )}
           </div>
-        )}
 
-        {/* Dynamic Type Tag */}
-        <span className={`absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded shadow ${
-          isDigital ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'
-        }`}>
-          {isDigital ? 'DIGITAL' : 'PHYSICAL'}
-        </span>
-
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {product.isPremium && (
-            <span className="px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 text-[10px] font-bold rounded flex items-center gap-0.5">
-              <Award className="w-3 h-3" /> PREMIUM
-            </span>
+          {/* Discount */}
+          {discount > 0 && (
+            <div className="absolute top-1 right-1 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded shadow">
+              -{discount}%
+            </div>
           )}
-          {product.isFeatured && (
-            <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold rounded flex items-center gap-0.5">
-              <Sparkles className="w-3 h-3" /> FEATURED
-            </span>
-          )}
-          {product.isBestSeller && (
-            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded flex items-center gap-0.5">
-              <TrendingUp className="w-3 h-3" /> BEST SELLER
-            </span>
-          )}
-        </div>
 
-        {/* Discount */}
-        {discount > 0 && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg">
-            -{discount}%
-          </div>
-        )}
-
-        {/* Wishlist */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsWishlisted(!isWishlisted);
-          }}
-          className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} />
-        </button>
-      </Link>
-
-      {/* Content */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
-        {/* Category */}
-        <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full capitalize self-start mb-1.5">
-          {product.category}
-        </span>
-
-        {/* Title */}
-        <Link href={productDetailUrl}>
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors leading-snug">
-            {product.title}
-          </h3>
+          {/* Wishlist */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsWishlisted(!isWishlisted);
+            }}
+            className="absolute bottom-1 right-1 bg-white/90 p-1 rounded-full shadow"
+          >
+            <Heart className={`w-3 h-3 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} />
+          </button>
         </Link>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1.5 mb-2">
-          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-bold text-gray-800">
-            {product.averageRating?.toFixed(1) || '0.0'}
+        {/* Content: প্যাডিং ও মার্জিন কমিয়ে কম্প্যাক্ট করা হয়েছে */}
+        <div className="p-2 sm:p-3 flex flex-col">
+          {/* Category */}
+          <span className="text-[8px] sm:text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full capitalize self-start mb-0.5 truncate max-w-full">
+            {product.category}
           </span>
-          <span className="text-xs text-gray-400">({formatNumber(product.totalReviews || 0)})</span>
-        </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-          <span className="flex items-center gap-1">
-            <ShoppingCart className="w-3.5 h-3.5" />
-            <span className="font-semibold text-gray-700">{formatNumber(product.sales || 0)}</span> sold
-          </span>
-          <span className="flex items-center gap-1">
-            <Eye className="w-3.5 h-3.5" />
-            <span className="font-semibold text-gray-700">{formatNumber(product.views || 0)}</span> views
-          </span>
-        </div>
+          {/* Title */}
+          <Link href={productDetailUrl}>
+            <h3 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-1 group-hover:text-indigo-600 transition-colors leading-tight">
+              {product.title}
+            </h3>
+          </Link>
 
-        {/* Price & Action Button */}
-        <div className="flex justify-between items-center mt-auto">
+          {/* Rating */}
+          <div className="flex items-center gap-1 mb-1 text-[9px] sm:text-xs">
+            <Star className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+            <span className="font-bold text-gray-800">
+              {product.averageRating?.toFixed(1) || '0.0'}
+            </span>
+            <span className="text-gray-400 text-[8px] sm:text-xs">({formatNumber(product.totalReviews || 0)})</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Price & Action Button Footer */}
+      <div className="p-2 sm:p-3 pt-0 mt-auto">
+        <div className="flex justify-between items-center gap-1">
           <div>
             {product.salePrice ? (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-extrabold text-indigo-600">${product.salePrice}</span>
-                <span className="text-xs text-gray-400 line-through">${product.price}</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xs sm:text-lg font-extrabold text-indigo-600">${product.salePrice}</span>
+                <span className="text-[9px] sm:text-xs text-gray-400 line-through">${product.price}</span>
               </div>
             ) : (
-              <span className="text-xl font-extrabold text-indigo-600">${product.price}</span>
+              <span className="text-xs sm:text-lg font-extrabold text-indigo-600">${product.price}</span>
             )}
           </div>
 
           <button
             onClick={handleAction}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg text-white flex items-center gap-1.5 transition-colors ${
+            className={`px-2 py-1 text-[9px] sm:text-xs font-bold rounded-lg text-white flex items-center gap-1 transition-colors flex-shrink-0 ${
               isDigital 
                 ? 'bg-indigo-600 hover:bg-indigo-700' 
                 : 'bg-amber-500 hover:bg-amber-600'
@@ -204,26 +189,26 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
           >
             {isDigital ? (
               <>
-                <Download className="w-3.5 h-3.5" />
-                <span>Get / Install</span>
+                <Download className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>Get</span>
               </>
             ) : (
               <>
-                <ShoppingCart className="w-3.5 h-3.5" />
-                <span>Buy Now</span>
+                <ShoppingCart className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>Buy</span>
               </>
             )}
           </button>
         </div>
 
         {/* Vendor */}
-        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100">
-          <div className="w-5 h-5 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+        <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-gray-100 text-[9px] sm:text-xs">
+          <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center text-white text-[7px] sm:text-[9px] font-bold flex-shrink-0">
             {product.vendor?.name?.charAt(0) || 'V'}
           </div>
-          <span className="text-[11px] text-gray-600 truncate">{product.vendor?.name || 'Unknown'}</span>
+          <span className="text-gray-600 truncate">{product.vendor?.name || 'Unknown'}</span>
           {product.vendor?.isApprovedVendor && (
-            <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+            <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />
           )}
         </div>
       </div>

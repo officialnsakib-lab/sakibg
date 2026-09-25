@@ -164,7 +164,7 @@ export default function HomePage() {
               <div className="lg:col-span-3 flex justify-center">
                 <div className="relative w-48 h-48 sm:w-60 sm:h-60 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl">
                   <Image 
-                    src="/vendor-person.png" 
+                    src="/sa.jpeg" 
                     alt="Vendor" 
                     fill 
                     className="object-cover"
@@ -281,7 +281,7 @@ export default function HomePage() {
 
                   <div className="relative z-10 w-24 h-28 sm:w-32 sm:h-36 flex items-center justify-center">
                     <Image 
-                      src="/shopping-bag.png" 
+                      src="/sr.jpeg" 
                       alt="Shopping Bag" 
                       fill 
                       className="object-contain drop-shadow-xl"

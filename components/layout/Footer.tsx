@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Globe, 
   Mail,
@@ -12,25 +13,25 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0a0f2c] text-white">
+    <footer className="bg-black text-white border-t border-white/10">
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
+          {/* Brand with Larger PNG Logo */}
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                W
+              <div className="relative w-48 sm:w-56 h-14 sm:h-16">
+                <Image 
+                  src="/tt.png" 
+                  alt="Wahisnova Logo" 
+                  fill 
+                  className="object-contain object-left"
+                />
               </div>
-              <span className="text-xl font-bold">Wahisnova</span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed mb-4">
               Premium digital marketplace for buying and selling digital products, website templates, and creative assets.
             </p>
-            <div className="flex gap-3">
-             
-             
-            </div>
           </div>
 
           {/* Quick Links */}
@@ -66,11 +67,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <Phone className="w-4 h-4 flex-shrink-0" />
-                +880 1XXX-XXXXXX
+                +880 1577-394019
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 flex-shrink-0" />
-                Dhaka, Bangladesh
+                Khulna, Bangladesh
               </li>
             </ul>
           </div>
@@ -84,7 +85,7 @@ export default function Footer() {
             © {new Date().getFullYear()} Wahisnova. All rights reserved.
           </p>
           <p className="text-xs text-gray-500 flex items-center gap-1">
-            Made with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> by Wahisnova Team
+            Design & Developed with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> by <span className="text-white font-medium">Nazmus Sakib</span>
           </p>
         </div>
       </div>
