@@ -4,23 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 import { 
-  Globe, Cpu, Palette, BookOpen, ShoppingBag, 
-  Car, HeartPulse, Trophy, Loader2, Package, ChevronRight 
+  Globe, ShoppingBag, Loader2, Package, ChevronRight, 
+  Smartphone, Shirt, Laptop, Sparkles, HeartPulse, Trophy, Car, Home
 } from 'lucide-react';
-
-interface SubCategory {
-  _id: string;
-  name: string;
-  slug: string;
-}
 
 interface Category {
   _id: string;
   name: string;
   slug: string;
-  icon?: string;
-  subCategories?: SubCategory[];
+  type?: string;
   productCount?: number;
+  count?: number;
 }
 
 export default function GlobalCategoriesPage() {
@@ -33,109 +27,167 @@ export default function GlobalCategoriesPage() {
 
   const fetchGlobalCategories = async () => {
     try {
-      const response = await axios.get('/api/categories/global');
-      if (response.data.success) {
-        setCategories(response.data.data);
+      const response = await axios.get('/api/categories');
+      const responseData = response.data;
+      let categoriesArray: Category[] = [];
+
+      if (Array.isArray(responseData)) {
+        categoriesArray = responseData;
+      } else if (responseData && Array.isArray(responseData.data)) {
+        categoriesArray = responseData.data;
+      } else if (responseData && Array.isArray(responseData.categories)) {
+        categoriesArray = responseData.categories;
       }
+
+      setCategories(categoriesArray);
     } catch (error) {
-      console.error('Error fetching global categories:', error);
+      console.error('Error fetching categories:', error);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // আইকন ম্যাপিং
+  // ক্যাটাগরির জন্য আইকন ম্যাপিং
   const getCategoryIcon = (slug: string) => {
     switch (slug) {
-      case 'electronics': return Cpu;
-      case 'fashion': return Palette;
-      case 'home-living': return ShoppingBag;
-      case 'digital-products': return Globe;
+      case 'gadgets':
+      case 'electronics': return Smartphone;
+      case 'clothing':
+      case 'fashion': return Shirt;
+      case 'laptop':
+      case 'computers': return Laptop;
+      case 'home-living': return Home;
       case 'health-beauty': return HeartPulse;
       case 'sports-fitness': return Trophy;
       case 'automotive': return Car;
-      default: return Package;
+      default: return Sparkles;
     }
   };
 
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
+  // ডিজিটাল এবং ফিজিক্যাল ক্যাটাগরি আলাদা করা (নাম বা টাইপ অনুযায়ী)
+  const digitalCategories = safeCategories.filter(
+    cat => cat.type === 'digital' || cat.slug?.includes('digital') || cat.name?.toLowerCase().includes('digital')
+  );
+
+  const physicalCategories = safeCategories.filter(
+    cat => !digitalCategories.includes(cat)
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <div className="min-h-screen bg-[#0b0f19] text-white py-12 px-4">
+      <div className="container mx-auto max-w-7xl">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-8 md:p-12 text-white text-center mb-10 shadow-lg">
-          <h1 className="text-3xl md:text-5xl font-extrabold mb-4">World's All Categories & Products</h1>
-          <p className="text-white/90 max-w-2xl mx-auto text-sm md:text-base">
-            Explore millions of physical goods, digital assets, and services categorized globally for your convenience.
+        <div className="text-center mb-14">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+            Explore Categories
+          </h1>
+          <p className="text-gray-400 text-sm md:text-base">
+            Discover digital and physical products from trusted vendors.
           </p>
         </div>
 
-        {/* Categories Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-24">
-            <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+            <Loader2 className="w-12 h-12 text-yellow-500 animate-spin" />
           </div>
-        ) : categories.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800">No Categories Found</h3>
-            <p className="text-gray-500 text-sm mt-1">Please add categories from your admin dashboard.</p>
+        ) : safeCategories.length === 0 ? (
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-12 text-center shadow-sm">
+            <Package className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-200">No Categories Found</h3>
+            <p className="text-gray-400 text-sm mt-1">Please add categories from your database or admin dashboard.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((category) => {
-              const IconComponent = getCategoryIcon(category.slug);
-              return (
-                <div 
-                  key={category._id} 
-                  className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden flex flex-col"
-                >
-                  {/* Card Header */}
-                  <div className="p-6 bg-gradient-to-br from-gray-50 to-indigo-50/30 border-b border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
-                        <IconComponent className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                        <span className="text-xs text-indigo-600 font-medium">Global Department</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sub-categories List */}
-                  <div className="p-6 flex-grow flex flex-col justify-between">
-                    <div className="space-y-2 mb-6">
-                      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sub-Categories</h4>
-                      {category.subCategories && category.subCategories.length > 0 ? (
-                        category.subCategories.map((sub) => (
-                          <Link
-                            key={sub._id}
-                            href={`/categories/${category.slug}/${sub.slug}`}
-                            className="flex items-center justify-between p-2 rounded-lg text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors text-sm group"
-                          >
-                            <span>{sub.name}</span>
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                          </Link>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">No sub-categories added yet.</p>
-                      )}
-                    </div>
-
-                    {/* View All Button */}
-                    <Link
-                      href={`/categories/${category.slug}`}
-                      className="w-full py-2.5 px-4 bg-gray-900 hover:bg-indigo-600 text-white text-center rounded-xl font-medium text-sm transition-colors block shadow-sm"
-                    >
-                      Browse All in {category.name}
-                    </Link>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* ১. ডিজিটাল প্রোডাক্টস ফোল্ডার */}
+            <div className="relative bg-gradient-to-b from-gray-900/90 to-gray-950 border border-amber-500/30 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(245,158,11,0.08)]">
+              <div className="flex items-center gap-4 mb-8 border-b border-gray-800 pb-6">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-inner">
+                  <Globe className="w-7 h-7" />
                 </div>
-              );
-            })}
+                <div>
+                  <h2 className="text-2xl font-bold text-amber-400 tracking-wide">DIGITAL PRODUCTS</h2>
+                  <p className="text-xs text-gray-400">Instant access. Endless possibilities.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {digitalCategories.length > 0 ? (
+                  digitalCategories.map((cat) => {
+                    const IconComp = getCategoryIcon(cat.slug);
+                    return (
+                      <Link
+                        key={cat._id}
+                        href={`/products?category=${encodeURIComponent(cat.name)}`}
+                        className="group bg-gray-900/60 hover:bg-amber-500/10 border border-gray-800 hover:border-amber-500/50 rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-300"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-gray-800 text-amber-400 group-hover:scale-110 flex items-center justify-center mb-3 transition-transform">
+                          <IconComp className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-300 group-hover:text-amber-300 line-clamp-2">
+                          {cat.name}
+                        </span>
+                        <span className="text-[10px] text-gray-500 mt-1">{cat.productCount || cat.count || 0} items</span>
+                        <ChevronRight className="w-3 h-3 text-gray-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <p className="col-span-4 text-center text-sm text-gray-500 py-6">No digital categories found.</p>
+                )}
+              </div>
+            </div>
+
+            {/* ২. ফিজিক্যাল প্রোডাক্টস ফোল্ডার */}
+            <div className="relative bg-gradient-to-b from-gray-900/90 to-gray-950 border border-blue-500/30 rounded-3xl p-6 md:p-8 shadow-[0_0_30px_rgba(59,130,246,0.08)]">
+              <div className="flex items-center gap-4 mb-8 border-b border-gray-800 pb-6">
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/40 text-blue-400 flex items-center justify-center shadow-inner">
+                  <ShoppingBag className="w-7 h-7" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-blue-400 tracking-wide">PHYSICAL PRODUCTS</h2>
+                  <p className="text-xs text-gray-400">Real products. Delivered to your door.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {physicalCategories.length > 0 ? (
+                  physicalCategories.map((cat) => {
+                    const IconComp = getCategoryIcon(cat.slug);
+                    return (
+                      <Link
+                        key={cat._id}
+                        href={`/products?category=${encodeURIComponent(cat.name)}`}
+                        className="group bg-gray-900/60 hover:bg-blue-500/10 border border-gray-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col items-center text-center transition-all duration-300"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-gray-800 text-blue-400 group-hover:scale-110 flex items-center justify-center mb-3 transition-transform">
+                          <IconComp className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-300 group-hover:text-blue-300 line-clamp-2">
+                          {cat.name}
+                        </span>
+                        <span className="text-[10px] text-gray-500 mt-1">{cat.productCount || cat.count || 0} items</span>
+                        <ChevronRight className="w-3 h-3 text-gray-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <p className="col-span-4 text-center text-sm text-gray-500 py-6">No physical categories found.</p>
+                )}
+              </div>
+            </div>
+
           </div>
         )}
+
+        {/* Footer Note */}
+        <div className="text-center mt-16 text-xs text-gray-500">
+          Wahisnova IMEX — Your Marketplace for Digital & Physical Products
+        </div>
 
       </div>
     </div>

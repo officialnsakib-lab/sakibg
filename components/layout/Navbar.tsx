@@ -21,10 +21,12 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
   
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   
   const isDashboardPage = pathname.startsWith('/vendor') || pathname.startsWith('/admin');
 
@@ -46,6 +48,9 @@ export default function Navbar() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
@@ -55,6 +60,7 @@ export default function Navbar() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
+    setIsMoreMenuOpen(false);
   }, [pathname]);
   
   const handleSearch = (e: React.FormEvent) => {
@@ -96,6 +102,8 @@ export default function Navbar() {
     return null;
   }
   
+  const moreMenuPaths = ['/about', '/faq', '/blog', '/contact'];
+
   return (
     <header className={`sticky top-0 z-50 bg-[#070b12] text-white transition-shadow w-full ${scrolled ? 'shadow-2xl shadow-black/50' : ''}`}>
       {/* Top Main Navbar Section */}
@@ -253,7 +261,7 @@ export default function Navbar() {
       <div className="hidden md:block border-b border-amber-500/10 bg-[#05080e]">
         <div className="w-full px-4 lg:px-6 flex items-center justify-between h-12">
           
-          <div className="flex items-center gap-6 lg:gap-8 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-6 lg:gap-8 overflow-visible">
             <Link 
               href="/" 
               className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
@@ -263,7 +271,7 @@ export default function Navbar() {
               Home
               {pathname === '/' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>}
             </Link>
-            
+
             <Link 
               href="/digital-products" 
               className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
@@ -293,6 +301,60 @@ export default function Navbar() {
               Categories
               {pathname === '/categories' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>}
             </Link>
+
+            {/* More Dropdown Menu (Desktop) */}
+            <div className="relative inline-block text-left" ref={moreMenuRef}>
+              <button
+                onClick={() => setIsMoreMenuOpen((prev) => !prev)}
+                type="button"
+                className={`flex items-center gap-1 text-sm font-medium transition-colors relative py-3 shrink-0 ${
+                  moreMenuPaths.includes(pathname)
+                    ? 'text-amber-400 font-semibold'
+                    : 'text-amber-100/80 hover:text-amber-400'
+                }`}
+              >
+                <span>More</span>
+                <svg className={`w-4 h-4 transition-transform duration-200 ${isMoreMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                {moreMenuPaths.includes(pathname) && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>
+                )}
+              </button>
+
+              {isMoreMenuOpen && (
+                <div className="absolute left-0 mt-2 w-48 rounded-xl bg-[#0c121d] text-white shadow-2xl border border-amber-500/30 py-2 z-[9999]">
+                  <Link 
+                    href="/about" 
+                    className="block px-4 py-2.5 text-sm font-medium hover:bg-amber-500/20 hover:text-amber-400 transition-colors"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    ℹ️ About Us
+                  </Link>
+                  <Link 
+                    href="/faq" 
+                    className="block px-4 py-2.5 text-sm font-medium hover:bg-amber-500/20 hover:text-amber-400 transition-colors"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    ❓ FAQ
+                  </Link>
+                  <Link 
+                    href="/blog" 
+                    className="block px-4 py-2.5 text-sm font-medium hover:bg-amber-500/20 hover:text-amber-400 transition-colors"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    📰 Blog
+                  </Link>
+                  <Link 
+                    href="/contact" 
+                    className="block px-4 py-2.5 text-sm font-medium hover:bg-amber-500/20 hover:text-amber-400 transition-colors"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    📞 Contact
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {isVendor && (
               <Link 
@@ -330,7 +392,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer (Fixed to display properly) */}
+      {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-[#070b12] border-t border-amber-500/15 px-4 py-5 space-y-4 shadow-2xl z-50 max-h-[calc(100vh-70px)] overflow-y-auto">
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -351,6 +413,14 @@ export default function Navbar() {
             <Link href="/digital-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Digital Products</Link>
             <Link href="/physical-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Physical Products</Link>
             <Link href="/categories" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Categories</Link>
+            
+            <div className="py-2 px-3 text-xs font-bold text-amber-400 uppercase tracking-wider">More Menu</div>
+            <div className="pl-3 space-y-1 border-l border-amber-500/20 ml-2">
+              <Link href="/about" className="block py-2 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">ℹ️ About Us</Link>
+              <Link href="/faq" className="block py-2 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">❓ FAQ</Link>
+              <Link href="/blog" className="block py-2 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">📰 Blog</Link>
+              <Link href="/contact" className="block py-2 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">📞 Contact</Link>
+            </div>
             
             {isVendor && <Link href="/vendor/dashboard" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Vendor Dashboard</Link>}
             {isAdmin && <Link href="/admin/dashboard" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Admin Dashboard</Link>}

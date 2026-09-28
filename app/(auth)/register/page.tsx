@@ -373,9 +373,9 @@ function RegisterForm() {
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-slate-400">
               I agree to the{' '}
-              <a href="#" className="text-amber-400 hover:underline">Terms of Service</a>{' '}
+              <a href="/terms-conditions" className="text-amber-400 hover:underline">Terms of Service</a>{' '}
               and{' '}
-              <a href="#" className="text-amber-400 hover:underline">Privacy Policy</a>
+              <a href="/privacy-policy" className="text-amber-400 hover:underline">Privacy Policy</a>
             </label>
           </div>
 
