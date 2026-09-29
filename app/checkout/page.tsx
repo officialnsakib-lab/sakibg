@@ -6,7 +6,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
+import { useCurrency } from '@/context/CurrencyContext';
 import { toast } from 'react-hot-toast';
 import { 
   Loader2,
@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const { cart, totalAmount, clearCart } = useCart();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { currency, exchangeRate, formatPrice, convertPrice } = useCurrency(); // ২. হুক কল করা হলো
+  const { currency, exchangeRate, formatPrice, convertPrice } = useCurrency();
   
   // URL Query Parameters
   const queryProductId = searchParams.get('id') || searchParams.get('productId');
@@ -90,11 +90,17 @@ export default function CheckoutPage() {
 
   const checkoutPrice = convertPrice(rawCheckoutPrice);
   
-  // ডেলিভারি চার্জ হিসাব (BDT হলে নির্দিষ্ট টাকা, USD হলে এক্সচেঞ্জ রেট দিয়ে ভাগ)
-  const baseDeliveryCharge = shippingAddress.deliveryArea === 'inside_dhaka' ? 60 : 120;
-  const deliveryCharge = currency === 'BDT' ? baseDeliveryCharge : baseDeliveryCharge / exchangeRate;
+  // ডেলিভারি চার্জ টাকায় ফিক্সড (ঢাকার ভেতরে ৬০ টাকা, বাইরে ১৫০ টাকা)। 
+  // যেহেতু CurrencyContext-এ সিস্টেমের বেস প্রাইস ডলারে হিসাব হয়, তাই টাকাকে এক্সচেঞ্জ রেট দিয়ে ভাগ করে ডলারে রূপান্তর করা হলো।
+  const baseDeliveryChargeInBDT = shippingAddress.deliveryArea === 'inside_dhaka' ? 60 : 150;
+  const deliveryChargeInUSD = baseDeliveryChargeInBDT / (exchangeRate || 120);
   
-  const finalTotalAmount = checkoutPrice + deliveryCharge;
+  // formatPrice ফাংশনটি কারেন্সি অনুযায়ী স্বয়ংক্রিয়ভাবে BDT বা USD তে কনভার্ট করে দেখাবে
+  const deliveryCharge = formatPrice(deliveryChargeInUSD);
+  
+  // টোটাল অ্যামাউন্ট হিসাব করার জন্য কনভার্টেড সংখ্যাটি বের করা
+  const numericDeliveryCharge = currency === 'BDT' ? baseDeliveryChargeInBDT : deliveryChargeInUSD;
+  const finalTotalAmount = checkoutPrice + numericDeliveryCharge;
 
   const paymentInfo = {
     bkash: { number: '01800000000' },
@@ -192,7 +198,7 @@ export default function CheckoutPage() {
         items: orderItems,
         productId: queryProductId || undefined,
         shippingAddress: isDigital ? null : shippingAddress,
-        deliveryCharge,
+        deliveryCharge: numericDeliveryCharge,
         totalAmount: finalTotalAmount,
         currency,
         exchangeRate,
@@ -299,8 +305,8 @@ export default function CheckoutPage() {
                       onChange={handleShippingChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
                     >
-                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(currency === 'BDT' ? 60 : 60 / exchangeRate)})</option>
-                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(currency === 'BDT' ? 120 : 120 / exchangeRate)})</option>
+                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(60 / (exchangeRate || 120))})</option>
+                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(150 / (exchangeRate || 120))})</option>
                     </select>
                   </div>
 
@@ -510,7 +516,7 @@ export default function CheckoutPage() {
                 {!isDigital && (
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping ({shippingAddress.deliveryArea === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})</span>
-                    <span className="text-gray-900 font-medium">{formatPrice(deliveryCharge)}</span>
+                    <span className="text-gray-900 font-medium">{deliveryCharge}</span>
                   </div>
                 )}
 

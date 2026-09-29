@@ -1,15 +1,19 @@
-'tsx'
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface CartItem {
-  id: string;
+  id?: string;
+  _id?: string;
+  productId?: string;
   title: string;
-  price: number;
-  image: string;
+  price?: number;
+  salePrice?: number;
+  image?: string;
+  thumbnailUrl?: string;
   quantity: number;
   vendorId?: string;
+  [key: string]: any; // অতিরিক্ত যেকোনো প্রপার্টি হ্যান্ডেল করার জন্য
 }
 
 interface CartContextType {
@@ -43,22 +47,35 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
+  // ইউনিক আইডি বের করার একটি হেল্পার ফাংশন
+  const getItemId = (item: CartItem) => item.productId || item._id || item.id || '';
+
   const addToCart = (product: CartItem) => {
+    const newProductId = getItemId(product);
+    
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + product.quantity }
-            : item
-        );
+      const existingIndex = prevCart.findIndex(
+        (item) => getItemId(item) === newProductId
+      );
+
+      if (existingIndex > -1) {
+        // যদি প্রduct আগে থেকেই থাকে, তবে কোয়ান্টিটি বাড়াবে
+        const updatedCart = [...prevCart];
+        const existingItem = updatedCart[existingIndex];
+        updatedCart[existingIndex] = {
+          ...existingItem,
+          quantity: Number(existingItem.quantity || 1) + Number(product.quantity || 1),
+        };
+        return updatedCart;
       }
-      return [...prevCart, product];
+      
+      // নতুন প্রডাক্ট হলে কার্টে যুক্ত করবে
+      return [...prevCart, { ...product, quantity: Number(product.quantity || 1) }];
     });
   };
 
   const removeFromCart = (id: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
+    setCart((prevCart) => prevCart.filter((item) => getItemId(item) !== id));
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -68,7 +85,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === id ? { ...item, quantity } : item
+        getItemId(item) === id ? { ...item, quantity } : item
       )
     );
   };
@@ -77,10 +94,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCart([]);
   };
 
-  const totalAmount = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // মোট দাম সঠিকভাবে হিসাব করার জন্য price বা salePrice এবং quantity চেক করা
+  const totalAmount = cart.reduce((sum, item) => {
+    const itemPrice = Number(item.salePrice || item.price || 0);
+    const itemQty = Number(item.quantity || 1);
+    return sum + itemPrice * itemQty;
+  }, 0);
 
   return (
     <CartContext.Provider
