@@ -5,15 +5,23 @@ export default function MobilePopup() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // চেক করা হচ্ছে অ্যাপটি কি Capacitor এর মাধ্যমে নে্টিভ অ্যাপ হিসেবে চলছে কি না
+    // ১. চেক করা হচ্ছে অ্যাপটি কি Capacitor এর মাধ্যমে নে্টিভ অ্যাপ হিসেবে চলছে কি না
     const isCapacitorApp = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
-
-    // যদি এটি নেটিভ অ্যাপ হয়, তবে পপআপ দেখানোর দরকার নেই
     if (isCapacitorApp) {
       return;
     }
 
-    // Check screen size to show the popup only on mobile browsers
+    // ২. চেক করা হচ্ছে ৩০ সেকেন্ডের কুলডাউন পিরিয়ড পার হয়েছে কি না
+    const dismissedTime = localStorage.getItem('app_popup_dismissed_time');
+    if (dismissedTime) {
+      const timeElapsed = Date.now() - parseInt(dismissedTime);
+      const thirtySeconds = 30 * 1000; // ৩০ সেকেন্ড মিলিসেকেন্ডে
+      if (timeElapsed < thirtySeconds) {
+        return; // ৩০ সেকেন্ডের মধ্যে হলে পপআপ দেখাবে না
+      }
+    }
+
+    // ৩. মোবাইল ব্রাউজার হলে স্ক্রিন সাইজ চেক করে পপআপ দেখাবে
     const checkScreenSize = () => {
       if (window.innerWidth < 768) {
         setIsOpen(true);
@@ -25,6 +33,12 @@ export default function MobilePopup() {
 
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    // পপআপ বন্ধ করার সময় বর্তমান সময় সেভ করে রাখা হলো
+    localStorage.setItem('app_popup_dismissed_time', Date.now().toString());
+  };
 
   if (!isOpen) return null;
 
@@ -38,13 +52,14 @@ export default function MobilePopup() {
           href="https://drive.google.com/uc?export=download&id=12L8bDmjRn5xUI3YbsAH6hgfluysr_qRN" 
           target="_blank" 
           rel="noopener noreferrer"
+          onClick={handleClose}
           className="block bg-green-600 text-white py-2.5 px-4 rounded-lg font-bold mb-3 hover:bg-green-700 transition"
         >
           Download APK
         </a>
         
         <button 
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           className="text-gray-500 text-sm hover:text-gray-700"
         >
           Maybe Later
