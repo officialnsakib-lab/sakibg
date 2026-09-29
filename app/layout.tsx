@@ -9,15 +9,16 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from 'react-hot-toast';
 import MaintenanceCheck from '@/components/MaintenanceCheck';
+import MobilePopup from '@/components/MobilePopup'; // মোবাইল পপআপ কম্পোনেন্ট ইমপোর্ট করা হলো
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Wahisnova - Digital Marketplace', // আপনার কাঙ্ক্ষিত টাইটেল দিন
+  title: 'Wahisnova - Digital Marketplace', 
   description: 'Buy and sell digital products and website templates',
   icons: {
     icon: [
-      { url: '/favicon.png?v=1', type: 'image/png' }, // public/favicon.png ফাইলের জন্য
+      { url: '/favicon.png?v=1', type: 'image/png' },
     ],
     shortcut: ['/favicon.png?v=1'],
     apple: [
@@ -51,6 +52,9 @@ export default function RootLayout({
                   <Navbar />
                   {children}
                   {/* <Footer /> */}
+                  
+                  {/* মোবাইল অ্যাপ ডাউনলোডের পপআপ (কম্পিউটারে দেখাবে না) */}
+                  <MobilePopup />
                 </MaintenanceCheck>
               </CurrencyProvider>
             </WishlistProvider>
