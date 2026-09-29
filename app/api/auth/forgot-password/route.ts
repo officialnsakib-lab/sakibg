@@ -39,8 +39,9 @@ export async function POST(req: NextRequest) {
     user.resetPasswordExpires = resetExpires;
     await user.save();
     
-    // Reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_API_URL}/reset-password/${resetToken}`;
+    // Reset URL - Updated with correct /auth/ path to match your frontend folder structure
+    const frontendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://wahisnovaimex.com';
+    const resetUrl = `${frontendUrl}/auth/reset-password/${resetToken}`;
     
     // Send email
     const emailHtml = `
