@@ -5,7 +5,15 @@ export default function MobilePopup() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check screen size to show the popup only on mobile devices
+    // চেক করা হচ্ছে অ্যাপটি কি Capacitor এর মাধ্যমে নে্টিভ অ্যাপ হিসেবে চলছে কি না
+    const isCapacitorApp = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
+
+    // যদি এটি নেটিভ অ্যাপ হয়, তবে পপআপ দেখানোর দরকার নেই
+    if (isCapacitorApp) {
+      return;
+    }
+
+    // Check screen size to show the popup only on mobile browsers
     const checkScreenSize = () => {
       if (window.innerWidth < 768) {
         setIsOpen(true);
