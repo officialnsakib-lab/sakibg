@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency, Currency } from '@/context/CurrencyContext';
 
 export default function Navbar() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function Navbar() {
   
   const { cart } = useCart();
   const { wishlist } = useWishlist();
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, availableCurrencies } = useCurrency();
 
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -148,14 +148,17 @@ export default function Navbar() {
           {/* Right Action Icons & Currency Switcher */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
-            {/* Currency Selector Dropdown */}
+            {/* Currency Selector Dropdown (Updated for all currencies) */}
             <select
               value={currency}
-              onChange={(e) => setCurrency(e.target.value as 'BDT' | 'USD')}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
               className="bg-neutral-800 text-amber-300 border border-amber-500/30 text-[11px] sm:text-sm rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer font-semibold"
             >
-              <option value="USD" className="bg-neutral-900 text-white">USD ($)</option>
-              <option value="BDT" className="bg-neutral-900 text-white">BDT (৳)</option>
+              {availableCurrencies?.map((cur) => (
+                <option key={cur} value={cur} className="bg-neutral-900 text-white">
+                  {cur}
+                </option>
+              ))}
             </select>
 
             {/* Auth / Profile Area */}

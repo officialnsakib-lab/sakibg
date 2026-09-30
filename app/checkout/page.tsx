@@ -29,9 +29,11 @@ export default function CheckoutPage() {
   // URL Query Parameters
   const queryProductId = searchParams.get('id') || searchParams.get('productId');
   const queryType = searchParams.get('type');
+  const queryQuantity = parseInt(searchParams.get('qty') || searchParams.get('quantity') || '1', 10);
 
   const [directProduct, setDirectProduct] = useState<any>(null);
   const [fetchingProduct, setFetchingProduct] = useState<boolean>(!!queryProductId);
+  const [productQuantity, setProductQuantity] = useState<number>(queryQuantity);
 
   const [processing, setProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -83,23 +85,26 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  // Calculations with currency conversion
+  // ফিজিক্যাল ও ডিরেক্ট প্রোডাক্টের ইউনিট প্রাইস সঠিকভাবে বের করার নিরাপদ লজিক (টাকায়)
+  const rawUnitPrice = directProduct 
+    ? Number(directProduct.salePrice ?? directProduct.price ?? directProduct.regularPrice ?? 0) 
+    : 0;
+
+  // সাবটোটাল হিসাব: ডিরেক্ট প্রোডাক্ট থাকলে (ইউনিট প্রাইস * কোয়ান্টিটি), অন্যথায় কার্টের টোটাল
   const rawCheckoutPrice = directProduct 
-    ? (directProduct.salePrice || directProduct.price || 0) 
+    ? rawUnitPrice * productQuantity 
     : totalAmount;
 
+  // কারেন্সি অনুযায়ী সাবটোটাল কনভার্ট করা (BDT হলে টাকার অংক থাকবে, USD হলে ভাগ হবে)
   const checkoutPrice = convertPrice(rawCheckoutPrice);
   
-  // ডেলিভারি চার্জ টাকায় ফিক্সড (ঢাকার ভেতরে ৬০ টাকা, বাইরে ১৫০ টাকা)। 
-  // যেহেতু CurrencyContext-এ সিস্টেমের বেস প্রাইস ডলারে হিসাব হয়, তাই টাকাকে এক্সচেঞ্জ রেট দিয়ে ভাগ করে ডলারে রূপান্তর করা হলো।
-  const baseDeliveryChargeInBDT = shippingAddress.deliveryArea === 'inside_dhaka' ? 60 : 150;
-  const deliveryChargeInUSD = baseDeliveryChargeInBDT / (exchangeRate || 120);
+  // ডেলিভারি চার্জ টাকায় ফিক্সড (ঢাকার ভেতরে ৬০ টাকা, বাইরে ১৫০ টাকা)
+  const baseDeliveryChargeInBDT = shippingAddress.deliveryArea === 'inside_dhaka' ? .5 : 1.4;
   
-  // formatPrice ফাংশনটি কারেন্সি অনুযায়ী স্বয়ংক্রিয়ভাবে BDT বা USD তে কনভার্ট করে দেখাবে
-  const deliveryCharge = formatPrice(deliveryChargeInUSD);
+  // কারেন্সি অনুযায়ী ডেলিভারি চার্জ কনভার্শন
+  const numericDeliveryCharge = convertPrice(baseDeliveryChargeInBDT);
+  const deliveryCharge = formatPrice(baseDeliveryChargeInBDT);
   
-  // টোটাল অ্যামাউন্ট হিসাব করার জন্য কনভার্টেড সংখ্যাটি বের করা
-  const numericDeliveryCharge = currency === 'BDT' ? baseDeliveryChargeInBDT : deliveryChargeInUSD;
   const finalTotalAmount = checkoutPrice + numericDeliveryCharge;
 
   const paymentInfo = {
@@ -177,8 +182,8 @@ export default function CheckoutPage() {
     if (directProduct) {
       orderItems = [{
         productId: directProduct._id || directProduct.id || queryProductId,
-        quantity: 1,
-        price: directProduct.salePrice || directProduct.price,
+        quantity: productQuantity,
+        price: rawUnitPrice,
         vendor: directProduct.vendorId || directProduct.vendor,
         productType: directProduct.productType || (isDigital ? 'digital' : 'physical')
       }];
@@ -186,7 +191,7 @@ export default function CheckoutPage() {
       orderItems = cart.map((item: any) => ({
         productId: item.productId || item._id || item.id,
         quantity: item.quantity || 1,
-        price: item.salePrice || item.price,
+        price: Number(item.salePrice || item.price || 0),
         vendor: item.vendor || item.vendorId,
         productType: item.productType || (isDigital ? 'digital' : 'physical')
       }));
@@ -198,8 +203,8 @@ export default function CheckoutPage() {
         items: orderItems,
         productId: queryProductId || undefined,
         shippingAddress: isDigital ? null : shippingAddress,
-        deliveryCharge: numericDeliveryCharge,
-        totalAmount: finalTotalAmount,
+        deliveryCharge: baseDeliveryChargeInBDT,
+        totalAmount: rawCheckoutPrice + baseDeliveryChargeInBDT,
         currency,
         exchangeRate,
         paymentMethod,
@@ -305,8 +310,8 @@ export default function CheckoutPage() {
                       onChange={handleShippingChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
                     >
-                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(60 / (exchangeRate || 120))})</option>
-                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(150 / (exchangeRate || 120))})</option>
+                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(.5)})</option>
+                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(1.4)})</option>
                     </select>
                   </div>
 
@@ -435,7 +440,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="bg-gray-50 rounded-lg p-4 border">
                     <p className="text-sm font-semibold text-gray-900 mb-2">
-                      Step 1: Send {formatPrice(finalTotalAmount)} to our {paymentMethod} merchant number
+                      Step 1: Send {formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)} to our {paymentMethod} merchant number
                     </p>
                     <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
                       <span className="font-mono font-semibold text-gray-900">
@@ -491,8 +496,13 @@ export default function CheckoutPage() {
               <div className="space-y-3 max-h-60 overflow-y-auto mb-4 pr-1">
                 {directProduct ? (
                   <div className="flex justify-between items-center text-sm border-b pb-2">
-                    <span className="font-medium text-gray-800 line-clamp-1">{directProduct.title}</span>
-                    <span className="font-semibold text-gray-900">{formatPrice(directProduct.salePrice || directProduct.price || 0)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-800 line-clamp-1">{directProduct.title}</span>
+                      <span className="text-gray-500">x{productQuantity}</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {formatPrice(rawUnitPrice * productQuantity)}
+                    </span>
                   </div>
                 ) : (
                   cart.map((item: any) => (
@@ -501,7 +511,7 @@ export default function CheckoutPage() {
                         <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
                         <span className="text-gray-500">x{item.quantity}</span>
                       </div>
-                      <span className="font-semibold text-gray-900">{formatPrice((item.salePrice || item.price || 0) * item.quantity)}</span>
+                      <span className="font-semibold text-gray-900">{formatPrice((Number(item.salePrice || item.price || 0)) * item.quantity)}</span>
                     </div>
                   ))
                 )}
@@ -510,7 +520,7 @@ export default function CheckoutPage() {
               <div className="border-t pt-3 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>{formatPrice(checkoutPrice)}</span>
+                  <span>{formatPrice(rawCheckoutPrice)}</span>
                 </div>
 
                 {!isDigital && (
@@ -522,7 +532,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2">
                   <span>Total</span>
-                  <span className="text-indigo-600">{formatPrice(finalTotalAmount)}</span>
+                  <span className="text-indigo-600">{formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}</span>
                 </div>
               </div>
 
@@ -536,7 +546,7 @@ export default function CheckoutPage() {
                     <Loader2 className="w-5 h-5 animate-spin" /> Processing...
                   </>
                 ) : (
-                  isDigital ? `Pay & Get Instant Access - ${formatPrice(finalTotalAmount)}` : `Place Order - ${formatPrice(finalTotalAmount)}`
+                  isDigital ? `Pay & Get Instant Access - ${formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}` : `Place Order - ${formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}`
                 )}
               </button>
             </div>
