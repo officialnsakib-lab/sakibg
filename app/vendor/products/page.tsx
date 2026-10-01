@@ -121,57 +121,69 @@ export default function MyProductsPage() {
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              {/* Thumbnail */}
-              <div className="h-40 bg-gradient-to-br from-indigo-500 to-violet-600 relative">
-                {product.thumbnailUrl ? (
-                  <img
-                    src={product.thumbnailUrl}
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-12 h-12 text-white/50" />
+            <div key={product._id} className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
+              <div>
+                {/* Thumbnail */}
+                <div className="h-40 bg-gradient-to-br from-indigo-500 to-violet-600 relative">
+                  {product.thumbnailUrl ? (
+                    <img
+                      src={product.thumbnailUrl}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-12 h-12 text-white/50" />
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2">
+                    {getStatusBadge(product.status)}
                   </div>
-                )}
-                <div className="absolute top-2 right-2">
-                  {getStatusBadge(product.status)}
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    {product.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-3">{product.category}</p>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xl font-bold text-indigo-600">
+                      ${product.price}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {product.sales || 0} sales
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {product.title}
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">{product.category}</p>
+              {/* Actions (View, Edit, Delete) */}
+              <div className="p-4 pt-0 flex gap-2">
+                <button
+                  onClick={() => window.open(`/digital-products/${product._id}`, '_blank')}
+                  className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 flex items-center justify-center gap-1 font-medium"
+                >
+                  <Eye className="w-4 h-4" />
+                  View
+                </button>
                 
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xl font-bold text-indigo-600">
-                    ${product.price}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {product.sales} sales
-                  </span>
-                </div>
+                <Link
+                  href={`/vendor/products/edit/${product._id}`}
+                  className="flex-1 px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm hover:bg-indigo-100 flex items-center justify-center gap-1 font-medium"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </Link>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => window.open(`/digital-products/${product._id}`, '_blank')}
-                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 flex items-center justify-center gap-1"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleDelete(product._id)}
+                  className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 flex items-center justify-center"
+                  aria-label="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))}
