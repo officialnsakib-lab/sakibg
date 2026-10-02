@@ -45,7 +45,7 @@ export default function MobilePopup() {
         <p className="text-sm text-gray-600 mb-4">Get the official app for a faster and smoother mobile experience.</p>
         
         <a 
-          href="https://drive.google.com/uc?export=download&id=12L8bDmjRn5xUI3YbsAH6hgfluysr_qRN" 
+          href="https://drive.google.com/file/d/1610kVt6ZEzcNHQXzwa_CuMzocn_7XxfY/view?usp=drive_link" 
           target="_blank" 
           rel="noopener noreferrer"
           onClick={handleClose}
