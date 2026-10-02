@@ -11,14 +11,10 @@ export default function MobilePopup() {
       return;
     }
 
-    // ২. চেক করা হচ্ছে ৩০ সেকেন্ডের কুলডাউন পিরিয়ড পার হয়েছে কি না
-    const dismissedTime = localStorage.getItem('app_popup_dismissed_time');
-    if (dismissedTime) {
-      const timeElapsed = Date.now() - parseInt(dismissedTime);
-      const thirtySeconds = 30 * 1000; // ৩০ সেকেন্ড মিলিসেকেন্ডে
-      if (timeElapsed < thirtySeconds) {
-        return; // ৩০ সেকেন্ডের মধ্যে হলে পপআপ দেখাবে না
-      }
+    // ২. চেক করা হচ্ছে পপআপটি এর আগে কখনো দেখানো বা ক্লোজ করা হয়েছে কি না
+    const hasSeenPopup = localStorage.getItem('app_popup_shown');
+    if (hasSeenPopup) {
+      return; // যদি একবারও দেখে থাকে, তবে আর কখনো পপআপ দেখাবে না
     }
 
     // ৩. মোবাইল ব্রাউজার হলে স্ক্রিন সাইজ চেক করে পপআপ দেখাবে
@@ -36,8 +32,8 @@ export default function MobilePopup() {
 
   const handleClose = () => {
     setIsOpen(false);
-    // পপআপ বন্ধ করার সময় বর্তমান সময় সেভ করে রাখা হলো
-    localStorage.setItem('app_popup_dismissed_time', Date.now().toString());
+    // পপআপ বন্ধ করার সাথে সাথে লোকালস্টোরেজে স্থায়ীভাবে সেভ করে রাখা হলো
+    localStorage.setItem('app_popup_shown', 'true');
   };
 
   if (!isOpen) return null;

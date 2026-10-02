@@ -32,7 +32,16 @@ export async function POST(req: NextRequest) {
     }
     
     const user = await (User as any).findOne({ email: email.toLowerCase().trim() }).select('+password');
-    // Email verified check (after password check)
+    
+    // ১. সবার আগে চেক করুন ইউজার পাওয়া গেছে কি না (যাতে null প্রপার্টি এরর না আসে)
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
+      );
+    }
+
+    // ২. এবার ইমেইল ভেরিফাইড কি না চেক করুন
     if (!user.isEmailVerified) {
       return NextResponse.json(
         { 
@@ -44,13 +53,8 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
     
+    // ৩. অ্যাকাউন্ট অ্যাক্টিভ কি না চেক করুন
     if (!user.isActive) {
       return NextResponse.json(
         { success: false, error: 'Account is deactivated' },
@@ -58,6 +62,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // ৪. ব্যানড কি না চেক করুন
     if (user.isBanned) {
       return NextResponse.json(
         { success: false, error: 'Account is banned' },
@@ -65,6 +70,7 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // ৫. পাসওয়ার্ড ম্যাচিং চেক করুন
     const isMatch = await bcrypt.compare(password, user.password);
     
     if (!isMatch) {
@@ -95,14 +101,14 @@ export async function POST(req: NextRequest) {
       totalSales: user.totalSales || 0,
       totalEarnings: user.totalEarnings || 0,
       pendingEarnings: user.pendingEarnings || 0,
-      withdrawnEarnings: user.withdrawnEarnings || 0, // ✅ Add
-      totalProducts: user.totalProducts || 0, // ✅ Add
-      activeProducts: user.activeProducts || 0, // ✅ Add
-      pendingProducts: user.pendingProducts || 0, // ✅ Add
-      averageRating: user.averageRating || 0, // ✅ Add
-      totalReviews: user.totalReviews || 0, // ✅ Add
-      isBanned: false,           // ✅ Add
-      isActive: true,            // ✅ Add
+      withdrawnEarnings: user.withdrawnEarnings || 0, 
+      totalProducts: user.totalProducts || 0, 
+      activeProducts: user.activeProducts || 0, 
+      pendingProducts: user.pendingProducts || 0, 
+      averageRating: user.averageRating || 0, 
+      totalReviews: user.totalReviews || 0, 
+      isBanned: false,          
+      isActive: true,            
       avatar: user.avatar,
       pendingIncome: user.pendingIncome || 0,
       pendingWithdrawal: user.pendingWithdrawal || 0,
@@ -111,7 +117,7 @@ export async function POST(req: NextRequest) {
       address: user.address,
       city: user.city,
       country: user.country,
-      website: user.website, // ✅ Add
+      website: user.website, 
       isEmailVerified: user.isEmailVerified || false
     };
     

@@ -173,7 +173,7 @@ export default function UploadProductPage() {
   const uploadToCloudinary = async (fileToUpload: File) => {
     const data = new FormData();
     data.append('file', fileToUpload);
-    data.append('upload_preset', 'wahisnovaimex'); // সঠিক Unsigned প্রিসেটের নাম দেওয়া হলো
+    data.append('upload_preset', 'wahisnovaimex');
 
     const cloudName = 'momlcc6a'; 
     try {
@@ -255,7 +255,7 @@ export default function UploadProductPage() {
       const response = await axios.post('/api/products/upload', payload, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
       

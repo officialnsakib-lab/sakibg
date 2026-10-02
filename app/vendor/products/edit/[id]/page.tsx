@@ -197,6 +197,10 @@ export default function EditProductPage() {
     setDragActive(false);
     const droppedFile = e.dataTransfer.files?.[0];
     if (droppedFile) {
+      if (droppedFile.size > 100 * 1024 * 1024) {
+        toast.error('File size must be less than 100MB');
+        return;
+      }
       setFile(droppedFile);
       if (errors.file) setErrors({ ...errors, file: '' });
     }
@@ -245,21 +249,18 @@ export default function EditProductPage() {
     setUploadProgress(10);
     
     try {
-      // ১. যদি নতুন মেইন ফাইল দেওয়া হয় তা আপলোড করা, না হলে পুরনোটা রাখা
       let fileUrl = existingFileUrl;
       if (file) {
         fileUrl = await uploadToCloudinary(file);
         setUploadProgress(40);
       }
 
-      // ২. নতুন থাম্বনেইল আপলোড বা পুরনো প্রিভিউ লিংক রাখা
       let thumbnailUrl = thumbnailPreview;
       if (thumbnail) {
         thumbnailUrl = await uploadToCloudinary(thumbnail);
         setUploadProgress(60);
       }
 
-      // ৩. পুরনো গ্যালারি ইমেজ + নতুন আপলোড করা গ্যালারি ইমেজ একত্রিত করা
       let finalGalleryUrls = [...existingGalleryUrls];
       for (let i = 0; i < galleryImages.length; i++) {
         const url = await uploadToCloudinary(galleryImages[i]);
@@ -295,7 +296,6 @@ export default function EditProductPage() {
         images: finalGalleryUrls
       };
 
-      // প্রোডাক্ট আপডেট এপিআই কল (PUT / PATCH)
       const response = await axios.put(`/api/products/${productId}`, payload, {
         headers: {
           'Content-Type': 'application/json',
@@ -327,16 +327,16 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-12">
+    <div className="max-w-5xl mx-auto pb-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
-        <p className="text-gray-600 mt-1">Update your product information</p>
+        <p className="text-gray-600 mt-1">Update your product information and assets</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Product Type */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Product Type <span className="text-red-500">*</span>
           </h2>
@@ -345,30 +345,30 @@ export default function EditProductPage() {
               type="button"
               onClick={() => { setProductType('digital'); setCategory('templates'); }}
               className={`p-5 rounded-lg border-2 text-center transition-all ${
-                productType === 'digital' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200'
+                productType === 'digital' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <Package className={`w-10 h-10 mx-auto mb-2 ${productType === 'digital' ? 'text-indigo-600' : 'text-gray-400'}`} />
               <div className="font-semibold text-gray-900">Digital Product</div>
-              <div className="text-xs text-gray-500 mt-1">Software, eBook, Template</div>
+              <div className="text-xs text-gray-500 mt-1">Software, eBook, Template, Downloadable files</div>
             </button>
             
             <button
               type="button"
               onClick={() => { setProductType('physical'); setCategory('electronics'); }}
               className={`p-5 rounded-lg border-2 text-center transition-all ${
-                productType === 'physical' ? 'border-orange-500 bg-orange-50 shadow-md' : 'border-gray-200'
+                productType === 'physical' ? 'border-orange-500 bg-orange-50 shadow-md' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <Box className={`w-10 h-10 mx-auto mb-2 ${productType === 'physical' ? 'text-orange-600' : 'text-gray-400'}`} />
               <div className="font-semibold text-gray-900">Physical Product</div>
-              <div className="text-xs text-gray-500 mt-1">Shippable goods, merchandise</div>
+              <div className="text-xs text-gray-500 mt-1">Shippable goods, merchandise, items requiring inventory</div>
             </button>
           </div>
         </div>
 
         {/* Basic Info */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
           <div className="space-y-4">
             <div>
@@ -377,7 +377,7 @@ export default function EditProductPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className={`w-full px-4 py-2.5 border rounded-lg ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
             </div>
@@ -388,7 +388,7 @@ export default function EditProductPage() {
                 type="text"
                 value={shortDescription}
                 onChange={(e) => setShortDescription(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 maxLength={300}
               />
             </div>
@@ -399,7 +399,7 @@ export default function EditProductPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
-                className={`w-full px-4 py-2.5 border rounded-lg ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
             </div>
@@ -407,15 +407,15 @@ export default function EditProductPage() {
         </div>
 
         {/* Category & Pricing */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Category & Pricing</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none capitalize"
               >
                 {(productType === 'digital' ? digitalCategories : physicalCategories).map((cat) => (
                   <option key={cat} value={cat}>
@@ -433,7 +433,7 @@ export default function EditProductPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 min="0"
                 step="0.01"
-                className={`w-full px-4 py-2.5 border rounded-lg ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
               />
               {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
             </div>
@@ -446,7 +446,7 @@ export default function EditProductPage() {
                 onChange={(e) => setSalePrice(e.target.value)}
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
           </div>
@@ -457,14 +457,15 @@ export default function EditProductPage() {
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="e.g. react, nextjs, ecommerce"
             />
           </div>
         </div>
 
         {/* Physical Product Specific Fields */}
         {productType === 'physical' && (
-          <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+          <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500 border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Inventory & Shipping Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -474,7 +475,7 @@ export default function EditProductPage() {
                   value={stockQuantity}
                   onChange={(e) => setStockQuantity(e.target.value)}
                   min="0"
-                  className={`w-full px-4 py-2.5 border rounded-lg ${errors.stockQuantity ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.stockQuantity ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.stockQuantity && <p className="text-xs text-red-500 mt-1">{errors.stockQuantity}</p>}
               </div>
@@ -485,7 +486,7 @@ export default function EditProductPage() {
                   type="text"
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>
 
@@ -495,7 +496,8 @@ export default function EditProductPage() {
                   type="text"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="e.g. 500g"
                 />
               </div>
 
@@ -505,7 +507,8 @@ export default function EditProductPage() {
                   type="text"
                   value={dimensions}
                   onChange={(e) => setDimensions(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="e.g. 10x5x2 cm"
                 />
               </div>
             </div>
@@ -513,7 +516,7 @@ export default function EditProductPage() {
         )}
 
         {/* Product File Upload */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Main File</h2>
           {existingFileUrl && !file && (
             <p className="text-xs text-indigo-600 mb-3 font-medium">Current file is already attached. Upload a new one only if you want to replace it.</p>
@@ -535,19 +538,19 @@ export default function EditProductPage() {
             ) : (
               <div>
                 <p className="font-medium text-gray-700">{existingFileUrl ? 'Replace existing file' : 'Click to upload or drag and drop'}</p>
-                <p className="text-xs text-gray-400 mt-1">ZIP, PDF, RAR, software package</p>
+                <p className="text-xs text-gray-400 mt-1">ZIP, PDF, RAR, software package (Up to 100MB)</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Thumbnail */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Thumbnail</h2>
           <div className="flex items-center gap-6">
             {thumbnailPreview ? (
               <div className="relative">
-                <img src={thumbnailPreview} className="w-32 h-32 object-cover rounded-lg border" alt="Thumbnail Preview" />
+                <img src={thumbnailPreview} className="w-32 h-32 object-cover rounded-lg border border-gray-200" alt="Thumbnail Preview" />
                 <button 
                   type="button" 
                   onClick={() => { setThumbnail(null); setThumbnailPreview(''); }} 
@@ -559,7 +562,7 @@ export default function EditProductPage() {
             ) : (
               <div 
                 onClick={() => thumbnailInputRef.current?.click()} 
-                className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400"
+                className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 bg-gray-50"
               >
                 <ImageIcon className="w-8 h-8 text-gray-400" />
                 <span className="text-xs text-gray-500 mt-2">Add Image</span>
@@ -570,12 +573,12 @@ export default function EditProductPage() {
         </div>
 
         {/* Gallery Images */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Gallery Images</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             {/* Existing Gallery Images */}
             {existingGalleryUrls.map((url, index) => (
-              <div key={`existing-${index}`} className="relative w-full h-28 rounded-lg border overflow-hidden">
+              <div key={`existing-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden">
                 <img src={url} alt={`Existing ${index}`} className="w-full h-28 object-cover" />
                 <button
                   type="button"
@@ -589,7 +592,7 @@ export default function EditProductPage() {
 
             {/* New Gallery Previews */}
             {galleryPreviews.map((preview, index) => (
-              <div key={`new-${index}`} className="relative w-full h-28 rounded-lg border overflow-hidden">
+              <div key={`new-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden">
                 <img src={preview} alt={`New Preview ${index}`} className="w-full h-28 object-cover" />
                 <button
                   type="button"
@@ -613,31 +616,31 @@ export default function EditProductPage() {
         </div>
 
         {/* Premium Toggle */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <label className="flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-3">
               <Award className="w-6 h-6 text-yellow-500" />
               <div>
                 <p className="font-semibold text-gray-900">Premium Product</p>
-                <p className="text-xs text-gray-500">Mark this product as premium featured</p>
+                <p className="text-xs text-gray-500">Mark this product as premium featured item</p>
               </div>
             </div>
             <input
               type="checkbox"
               checked={isPremium}
               onChange={(e) => setIsPremium(e.target.checked)}
-              className="w-5 h-5 text-indigo-600 rounded"
+              className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
             />
           </label>
         </div>
 
         {/* Progress Bar */}
         {loading && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div className="bg-indigo-600 h-2.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
             </div>
-            <p className="text-sm text-gray-500 mt-2">{uploadProgress}% updating...</p>
+            <p className="text-sm text-gray-500 mt-2 text-center">{uploadProgress}% updating...</p>
           </div>
         )}
 
@@ -646,7 +649,7 @@ export default function EditProductPage() {
           <button 
             type="submit" 
             disabled={loading} 
-            className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors shadow-sm"
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             {loading ? 'Updating Product...' : 'Save Changes'}
@@ -654,7 +657,7 @@ export default function EditProductPage() {
           <button 
             type="button" 
             onClick={() => router.back()} 
-            className="px-6 py-3.5 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50"
+            className="px-6 py-3.5 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
