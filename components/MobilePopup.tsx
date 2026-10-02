@@ -11,29 +11,27 @@ export default function MobilePopup() {
       return;
     }
 
-    // ২. চেক করা হচ্ছে পপআপটি এর আগে কখনো দেখানো বা ক্লোজ করা হয়েছে কি না
-    const hasSeenPopup = localStorage.getItem('app_popup_shown');
+    // ২. চেক করা হচ্ছে এই সেশনে বা ব্রাউজারে পপআপটি অলরেডি দেখানো হয়েছে কি না
+    const hasSeenPopup = sessionStorage.getItem('app_popup_shown') || localStorage.getItem('app_popup_shown');
     if (hasSeenPopup) {
-      return; // যদি একবারও দেখে থাকে, তবে আর কখনো পপআপ দেখাবে না
+      return; // যদি দেখে থাকে, তবে আর দেখাবে না
     }
 
-    // ৩. মোবাইল ব্রাউজার হলে স্ক্রিন সাইজ চেক করে পপআপ দেখাবে
+    // ৩. মোবাইল ব্রাউজার হলে সাইটে ঢোকার সঙ্গে সঙ্গে পপআপ দেখাবে
     const checkScreenSize = () => {
       if (window.innerWidth < 768) {
         setIsOpen(true);
+        // পপআপ ওপেন হওয়ার সাথে সাথেই স্টোরেজে সেভ করে দেওয়া হলো যাতে সাইটে থাকা অবস্থায় আর না আসে
+        sessionStorage.setItem('app_popup_shown', 'true');
+        localStorage.setItem('app_popup_shown', 'true');
       }
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-
-    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   const handleClose = () => {
     setIsOpen(false);
-    // পপআপ বন্ধ করার সাথে সাথে লোকালস্টোরেজে স্থায়ীভাবে সেভ করে রাখা হলো
-    localStorage.setItem('app_popup_shown', 'true');
   };
 
   if (!isOpen) return null;
