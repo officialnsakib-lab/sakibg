@@ -105,11 +105,11 @@ export async function POST(req: NextRequest) {
       previewImages.push(...results.filter((item): item is { url: string; id: string } => item !== null));
     }
     
-    // ভ্যালিডেশন
+    // ভ্যালিডেশন (সঠিক স্ট্যাটাস কোড 400 দেওয়া হলো)
     if (!title || !description || !category || isNaN(price) || !thumbnailUrl) {
       return NextResponse.json(
         { success: false, error: 'All required fields (Title, Description, Category, Price, and Main Image) must be filled.' },
-        { status: { 400 } as any }
+        { status: 400 }
       );
     }
     
@@ -135,13 +135,12 @@ export async function POST(req: NextRequest) {
       stock: stockQuantity || 0,
       sku: sku || null,
       weight: weight || null,
-      // স্কিমা অনুযায়ী dimensions অবজেক্ট ফরম্যাট (যদি স্ট্রিং আসে তবে সাময়িকভাবে নাল বা ফ্লেক্সিবল রাখা ভালো)
       dimensions: null, 
       isPremium,
       fileUrl: null,
       thumbnailUrl,
       thumbnailId,
-      previewImages, // স্কিমার সাথে মিল রেখে সঠিক ফিল্ড ব্যবহার করা হলো
+      previewImages,
       metaTitle: title,
       metaDescription: shortDescription || description.substring(0, 160),
       keywords: tags,
