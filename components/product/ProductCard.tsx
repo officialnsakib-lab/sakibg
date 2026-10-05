@@ -31,6 +31,7 @@ interface ProductCardProps {
     salePrice: number | any;
     thumbnailUrl: string;
     images?: string[];
+    previewImages?: Array<{ url: string; id: string }>; // <--- গ্যালারি অবজেক্ট অ্যারে যোগ করা হলো
     averageRating: number;
     totalReviews: number;
     sales: number;
@@ -58,14 +59,19 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // গ্যালারি ছবিগুলো অবজেক্ট (previewImages) বা স্ট্রিং (images) যাই হোক না কেন তা হ্যান্ডেল করা হলো
+  const galleryUrls = (product.previewImages || product.images || []).map((img: any) => 
+    typeof img === 'object' && img !== null ? img.url : img
+  );
+
   const allImages = [
     product.thumbnailUrl,
-    ...(product.images || [])
+    ...galleryUrls
   ].filter(Boolean);
 
   const isLoved = isInWishlist(product._id);
   
-  // 🔴 ফিক্সড লিংক: সঠিক ফিজিক্যাল প্রোডাক্ট ডিটেইল পেজ রাউট
+  // সঠিক ফিজিক্যাল প্রোডাক্ট ডিটেইল পেজ রাউট
   const productDetailPageUrl = `/physical-products/${product._id}`;
 
   const parsePrice = (val: any) => {

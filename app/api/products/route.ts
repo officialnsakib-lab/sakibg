@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '12');
     
     // ============ BUILD MATCH QUERY ============
-    // সবসময় শুধু ফিজিক্যাল প্রোডাক্ট এবং ফুড আইটেম ফিল্টার করবে (ডিজিটাল বাদ)
+    // সবসময় শুধু ফিজিক্যাল প্রোডাক্ট এবং ফুড আইটেম ফিল্টার করবে (ডিজিটাল বাদ)
     const matchQuery: any = { 
       status: 'approved',
       productType: 'physical' 
@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
           salePrice: 1,
           discountPercent: 1,
           thumbnailUrl: 1,
-          images: 1,
+          previewImages: 1, // <--- স্কিমার সাথে মিল রেখে images এর পরিবর্তে previewImages দেওয়া হলো
           demoUrl: 1,
           videoUrl: 1,
           averageRating: 1,

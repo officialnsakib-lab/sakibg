@@ -63,37 +63,53 @@ export async function POST(req: NextRequest) {
     const stockQuantity = formData.get('stockQuantity') ? parseInt(formData.get('stockQuantity') as string) : 0;
     const sku = formData.get('sku') as string;
     const weight = formData.get('weight') as string;
-    const dimensions = formData.get('dimensions') as string;
+    const dimensionsStr = formData.get('dimensions') as string; // ফ্রন্টএন্ড থেকে স্ট্রিং আসতে পারে
     const isPremium = formData.get('isPremium') === 'true';
 
     // ১. মূল প্রোডাক্ট ইমেজ (Thumbnail) ক্লাউডিনারিতে আপলোড
     let thumbnailUrl = '';
+    let thumbnailId = '';
     const thumbnailObj = formData.get('thumbnail') as File | null;
     if (thumbnailObj && typeof thumbnailObj === 'object' && thumbnailObj.size > 0) {
       const bytes = await thumbnailObj.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const uploadRes = await uploadBufferToCloudinary(buffer);
       thumbnailUrl = uploadRes.secure_url;
+      thumbnailId = uploadRes.public_id || '';
     }
 
-    // ২. গ্যালারি ইমেজগুলো ক্লাউডিনারিতে আপলোড
+    // ২. গ্যালারি ইমেজগুলো ক্লাউডিনারিতে আপলোড (Promise.all দিয়ে প্যারালালি)
     const galleryFiles = formData.getAll('images') as File[];
-    const imageUrls: string[] = [];
+    const previewImages: { url: string; id: string }[] = [];
     
-    for (const imgFile of galleryFiles) {
-      if (imgFile && typeof imgFile === 'object' && imgFile.size > 0) {
-        const bytes = await imgFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const uploadRes = await uploadBufferToCloudinary(buffer);
-        imageUrls.push(uploadRes.secure_url);
-      }
+    if (galleryFiles && galleryFiles.length > 0) {
+      const uploadPromises = galleryFiles.map(async (imgFile) => {
+        if (imgFile && typeof imgFile === 'object' && 'size' in imgFile && imgFile.size > 0) {
+          try {
+            const bytes = await imgFile.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            const uploadRes = await uploadBufferToCloudinary(buffer);
+            return {
+              url: uploadRes.secure_url,
+              id: uploadRes.public_id || ''
+            };
+          } catch (err) {
+            console.error("Gallery image upload error:", err);
+            return null;
+          }
+        }
+        return null;
+      });
+
+      const results = await Promise.all(uploadPromises);
+      previewImages.push(...results.filter((item): item is { url: string; id: string } => item !== null));
     }
     
     // ভ্যালিডেশন
     if (!title || !description || !category || isNaN(price) || !thumbnailUrl) {
       return NextResponse.json(
         { success: false, error: 'All required fields (Title, Description, Category, Price, and Main Image) must be filled.' },
-        { status: 400 }
+        { status: { 400 } as any }
       );
     }
     
@@ -119,11 +135,13 @@ export async function POST(req: NextRequest) {
       stock: stockQuantity || 0,
       sku: sku || null,
       weight: weight || null,
-      dimensions: dimensions || null,
+      // স্কিমা অনুযায়ী dimensions অবজেক্ট ফরম্যাট (যদি স্ট্রিং আসে তবে সাময়িকভাবে নাল বা ফ্লেক্সিবল রাখা ভালো)
+      dimensions: null, 
       isPremium,
       fileUrl: null,
       thumbnailUrl,
-      images: imageUrls,
+      thumbnailId,
+      previewImages, // স্কিমার সাথে মিল রেখে সঠিক ফিল্ড ব্যবহার করা হলো
       metaTitle: title,
       metaDescription: shortDescription || description.substring(0, 160),
       keywords: tags,
