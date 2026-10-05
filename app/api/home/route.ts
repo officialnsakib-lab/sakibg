@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
           salePrice: 1,
           discountPercent: 1,
           thumbnailUrl: 1,
+          previewImages: 1, // গ্যালারি ইমেজ যুক্ত করা হলো
           averageRating: 1,
           totalReviews: 1,
           sales: 1,
@@ -103,6 +104,7 @@ export async function GET(req: NextRequest) {
           salePrice: 1,
           discountPercent: 1,
           thumbnailUrl: 1,
+          previewImages: 1, // গ্যালারি ইমেজ যুক্ত করা হলো
           averageRating: 1,
           totalReviews: 1,
           sales: 1,
