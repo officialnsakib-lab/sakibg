@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     const stockQuantity = formData.get('stockQuantity') ? parseInt(formData.get('stockQuantity') as string) : 0;
     const sku = formData.get('sku') as string;
     const weight = formData.get('weight') as string;
-    const dimensionsStr = formData.get('dimensions') as string; // ফ্রন্টএন্ড থেকে স্ট্রিং আসতে পারে
+    const dimensionsStr = formData.get('dimensions') as string;
     const isPremium = formData.get('isPremium') === 'true';
 
     // ১. মূল প্রোডাক্ট ইমেজ (Thumbnail) ক্লাউডিনারিতে আপলোড
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       previewImages.push(...results.filter((item): item is { url: string; id: string } => item !== null));
     }
     
-    // ভ্যালিডেশন (সঠিক স্ট্যাটাস কোড 400 দেওয়া হলো)
+    // ভ্যালিডেশন
     if (!title || !description || !category || isNaN(price) || !thumbnailUrl) {
       return NextResponse.json(
         { success: false, error: 'All required fields (Title, Description, Category, Price, and Main Image) must be filled.' },
