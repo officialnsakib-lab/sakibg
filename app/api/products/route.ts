@@ -1,4 +1,3 @@
-// app/api/products/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Product from '@/models/Product';
@@ -11,10 +10,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     
     // ============ FILTER PARAMS ============
-    const productType = searchParams.get('type');
     const category = searchParams.get('category');
     const subCategory = searchParams.get('subCategory');
-    const websiteType = searchParams.get('websiteType');
     const search = searchParams.get('search');
     const minPrice = parseFloat(searchParams.get('minPrice') || '0');
     const maxPrice = parseFloat(searchParams.get('maxPrice') || '1000000');
@@ -23,7 +20,6 @@ export async function GET(req: NextRequest) {
     const verified = searchParams.get('verified');
     const premium = searchParams.get('premium');
     const bestSeller = searchParams.get('bestSeller');
-    const adsenseApproved = searchParams.get('adsenseApproved');
     
     // ============ SORT PARAMS ============
     const sort = searchParams.get('sort') || 'recommended';
@@ -33,11 +29,11 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '12');
     
     // ============ BUILD MATCH QUERY ============
-    const matchQuery: any = { status: 'approved' };
-    
-    if (productType) {
-      matchQuery.productType = productType;
-    }
+    // সবসময় শুধু ফিজিক্যাল প্রোডাক্ট এবং ফুড আইটেম ফিল্টার করবে (ডিজিটাল বাদ)
+    const matchQuery: any = { 
+      status: 'approved',
+      productType: 'physical' 
+    };
     
     if (category && category !== 'all') {
       matchQuery.category = category;
@@ -45,10 +41,6 @@ export async function GET(req: NextRequest) {
     
     if (subCategory) {
       matchQuery.subCategory = subCategory;
-    }
-    
-    if (websiteType) {
-      matchQuery.websiteType = websiteType;
     }
     
     if (search) {
@@ -83,15 +75,10 @@ export async function GET(req: NextRequest) {
       matchQuery.isBestSeller = true;
     }
     
-    if (adsenseApproved === 'true') {
-      matchQuery.isAdsenseApproved = true;
-    }
-    
     // ============ SMART SCORE AGGREGATION ============
     const pipeline: any[] = [
       { $match: matchQuery },
       
-      // Calculate smart score
       {
         $addFields: {
           smartScore: {
@@ -143,12 +130,12 @@ export async function GET(req: NextRequest) {
           productType: 1,
           category: 1,
           subCategory: 1,
-          websiteType: 1,
           tags: 1,
           price: 1,
           salePrice: 1,
           discountPercent: 1,
           thumbnailUrl: 1,
+          images: 1,
           demoUrl: 1,
           videoUrl: 1,
           averageRating: 1,
@@ -160,7 +147,6 @@ export async function GET(req: NextRequest) {
           isBestSeller: 1,
           isVerified: 1,
           isPremium: 1,
-          isAdsenseApproved: 1,
           isNew: 1,
           smartScore: 1,
           popularityScore: 1,
@@ -183,9 +169,9 @@ export async function GET(req: NextRequest) {
     ]);
     const total = totalResult[0]?.total || 0;
     
-    // Categories with count
+    // Categories with count (শুধুমাত্র ফিজিক্যাল ও ফুড আইটেম ক্যাটাগরি)
     const categoriesPipeline = [
-      { $match: { status: 'approved', ...(productType ? { productType } : {}) } },
+      { $match: { status: 'approved', productType: 'physical' } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ];
@@ -197,7 +183,7 @@ export async function GET(req: NextRequest) {
     
     // Price range
     const priceRangePipeline = [
-      { $match: { status: 'approved', ...(productType ? { productType } : {}) } },
+      { $match: { status: 'approved', productType: 'physical' } },
       {
         $group: {
           _id: null,
@@ -211,7 +197,7 @@ export async function GET(req: NextRequest) {
     
     // Top sellers
     const topSellersPipeline = [
-      { $match: { status: 'approved', ...(productType ? { productType } : {}) } },
+      { $match: { status: 'approved', productType: 'physical' } },
       { $sort: { sales: -1 } },
       { $limit: 5 },
       {

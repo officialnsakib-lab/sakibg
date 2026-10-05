@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
 import { useCart } from '@/context/CartContext';
@@ -22,12 +22,14 @@ import {
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
   const { cart, totalAmount, clearCart } = useCart();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { currency, exchangeRate, formatPrice, convertPrice } = useCurrency();
   
-  // URL Query Parameters
-  const queryProductId = searchParams.get('id') || searchParams.get('productId');
+  // URL Query Parameters বা Dynamic Route ID
+  const routeProductId = params?.id || params?.ib;
+  const queryProductId = routeProductId || searchParams.get('id') || searchParams.get('productId');
   const queryType = searchParams.get('type');
   const queryQuantity = parseInt(searchParams.get('qty') || searchParams.get('quantity') || '1', 10);
 
@@ -85,27 +87,35 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  // ফিজিক্যাল ও ডিরেক্ট প্রোডাক্টের ইউনিট প্রাইস সঠিকভাবে বের করার নিরাপদ লজিক (টাকায়)
+  // প্রাইজ নিখুঁতভাবে পার্স করার ফাংশন (অবজেক্ট বা স্ট্রিং হ্যান্ডেল করার জন্য)
+  const parsePrice = (val: any) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'object') {
+      return Number(val.$numberDecimal || val.value || 0) || 0;
+    }
+    return Number(val) || 0;
+  };
+
   const rawUnitPrice = directProduct 
-    ? Number(directProduct.salePrice ?? directProduct.price ?? directProduct.regularPrice ?? 0) 
+    ? parsePrice(directProduct.salePrice ?? directProduct.price ?? directProduct.regularPrice ?? 0) 
     : 0;
 
-  // সাবটোটাল হিসাব: ডিরেক্ট প্রোডাক্ট থাকলে (ইউনিট প্রাইস * কোয়ান্টিটি), অন্যথায় কার্টের টোটাল
+  // কার্টের মোট প্রাইজ হিসাব করা
+  const rawCartTotal = cart.reduce((sum, item: any) => {
+    const itemPrice = parsePrice(item.salePrice ?? item.price ?? 0);
+    const qty = Number(item.quantity) || 1;
+    return sum + (itemPrice * qty);
+  }, 0);
+
+  // সাবটোটাল হিসাব (USD বেসিসে)
   const rawCheckoutPrice = directProduct 
     ? rawUnitPrice * productQuantity 
-    : totalAmount;
+    : (totalAmount > 0 ? totalAmount : rawCartTotal);
 
-  // কারেন্সি অনুযায়ী সাবটোটাল কনভার্ট করা (BDT হলে টাকার অংক থাকবে, USD হলে ভাগ হবে)
-  const checkoutPrice = convertPrice(rawCheckoutPrice);
+  // ডেলিভারি চার্জ ডলারে ফিক্সড (ঢাকার ভেতরে ৬০ টাকা ~ $0.50, বাইরে ১২০ টাকা ~ $1.00 ধরে)
+  const baseDeliveryChargeInUSD = shippingAddress.deliveryArea === 'inside_dhaka' ? 0.50 : 1.00;
   
-  // ডেলিভারি চার্জ টাকায় ফিক্সড (ঢাকার ভেতরে ৬০ টাকা, বাইরে ১৫০ টাকা)
-  const baseDeliveryChargeInBDT = shippingAddress.deliveryArea === 'inside_dhaka' ? .5 : 1.4;
-  
-  // কারেন্সি অনুযায়ী ডেলিভারি চার্জ কনভার্শন
-  const numericDeliveryCharge = convertPrice(baseDeliveryChargeInBDT);
-  const deliveryCharge = formatPrice(baseDeliveryChargeInBDT);
-  
-  const finalTotalAmount = checkoutPrice + numericDeliveryCharge;
+  const finalTotalAmountInUSD = rawCheckoutPrice + baseDeliveryChargeInUSD;
 
   const paymentInfo = {
     bkash: { number: '01800000000' },
@@ -191,7 +201,7 @@ export default function CheckoutPage() {
       orderItems = cart.map((item: any) => ({
         productId: item.productId || item._id || item.id,
         quantity: item.quantity || 1,
-        price: Number(item.salePrice || item.price || 0),
+        price: parsePrice(item.salePrice || item.price || 0),
         vendor: item.vendor || item.vendorId,
         productType: item.productType || (isDigital ? 'digital' : 'physical')
       }));
@@ -203,8 +213,8 @@ export default function CheckoutPage() {
         items: orderItems,
         productId: queryProductId || undefined,
         shippingAddress: isDigital ? null : shippingAddress,
-        deliveryCharge: baseDeliveryChargeInBDT,
-        totalAmount: rawCheckoutPrice + baseDeliveryChargeInBDT,
+        deliveryCharge: baseDeliveryChargeInUSD,
+        totalAmount: finalTotalAmountInUSD,
         currency,
         exchangeRate,
         paymentMethod,
@@ -308,10 +318,10 @@ export default function CheckoutPage() {
                       name="deliveryArea"
                       value={shippingAddress.deliveryArea}
                       onChange={handleShippingChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm text-gray-900"
                     >
-                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(.5)})</option>
-                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(1.4)})</option>
+                      <option value="inside_dhaka">Inside Dhaka (Delivery Charge: {formatPrice(0.50)})</option>
+                      <option value="outside_dhaka">Outside Dhaka (Delivery Charge: {formatPrice(1.00)})</option>
                     </select>
                   </div>
 
@@ -322,7 +332,7 @@ export default function CheckoutPage() {
                       name="fullName"
                       value={shippingAddress.fullName}
                       onChange={handleShippingChange}
-                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="Enter full name"
                     />
                     {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
@@ -335,7 +345,7 @@ export default function CheckoutPage() {
                       name="phone"
                       value={shippingAddress.phone}
                       onChange={handleShippingChange}
-                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="01XXXXXXXXX"
                     />
                     {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
@@ -348,7 +358,7 @@ export default function CheckoutPage() {
                       name="address"
                       value={shippingAddress.address}
                       onChange={handleShippingChange}
-                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="House/Apartment, Area, Road"
                     />
                     {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
@@ -362,7 +372,7 @@ export default function CheckoutPage() {
                         name="city"
                         value={shippingAddress.city}
                         onChange={handleShippingChange}
-                        className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                        className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
                         placeholder="City/District"
                       />
                       {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city}</p>}
@@ -374,7 +384,7 @@ export default function CheckoutPage() {
                         name="postalCode"
                         value={shippingAddress.postalCode}
                         onChange={handleShippingChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900"
                         placeholder="Postal Code"
                       />
                     </div>
@@ -440,7 +450,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="bg-gray-50 rounded-lg p-4 border">
                     <p className="text-sm font-semibold text-gray-900 mb-2">
-                      Step 1: Send {formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)} to our {paymentMethod} merchant number
+                      Step 1: Send {formatPrice(finalTotalAmountInUSD)} to our {paymentMethod} merchant number
                     </p>
                     <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
                       <span className="font-mono font-semibold text-gray-900">
@@ -462,7 +472,7 @@ export default function CheckoutPage() {
                       type="text"
                       value={transactionId}
                       onChange={(e) => setTransactionId(e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-lg text-sm ${errors.transactionId ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-sm text-gray-900 ${errors.transactionId ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="e.g. 9HJ8KLMN3P"
                     />
                     {errors.transactionId && <p className="text-xs text-red-500 mt-1">{errors.transactionId}</p>}
@@ -474,7 +484,7 @@ export default function CheckoutPage() {
                       type="tel"
                       value={senderNumber}
                       onChange={(e) => setSenderNumber(e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-lg text-sm ${errors.senderNumber ? 'border-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-sm text-gray-900 ${errors.senderNumber ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="01XXXXXXXXX"
                     />
                     {errors.senderNumber && <p className="text-xs text-red-500 mt-1">{errors.senderNumber}</p>}
@@ -505,34 +515,38 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 ) : (
-                  cart.map((item: any) => (
-                    <div key={item.productId || item._id || item.id} className="flex justify-between items-center text-sm border-b pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
-                        <span className="text-gray-500">x{item.quantity}</span>
+                  cart.map((item: any) => {
+                    const itemPrice = parsePrice(item.salePrice || item.price || 0);
+                    const qty = item.quantity || 1;
+                    return (
+                      <div key={item.productId || item._id || item.id} className="flex justify-between items-center text-sm border-b pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-800 line-clamp-1">{item.title}</span>
+                          <span className="text-gray-500">x{qty}</span>
+                        </div>
+                        <span className="font-semibold text-gray-900">{formatPrice(itemPrice * qty)}</span>
                       </div>
-                      <span className="font-semibold text-gray-900">{formatPrice((Number(item.salePrice || item.price || 0)) * item.quantity)}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
               <div className="border-t pt-3 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>{formatPrice(rawCheckoutPrice)}</span>
+                  <span className="text-gray-900 font-medium">{formatPrice(rawCheckoutPrice)}</span>
                 </div>
 
                 {!isDigital && (
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Shipping ({shippingAddress.deliveryArea === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})</span>
-                    <span className="text-gray-900 font-medium">{deliveryCharge}</span>
+                    <span className="text-gray-900 font-medium">{formatPrice(baseDeliveryChargeInUSD)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2">
                   <span>Total</span>
-                  <span className="text-indigo-600">{formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}</span>
+                  <span className="text-indigo-600">{formatPrice(finalTotalAmountInUSD)}</span>
                 </div>
               </div>
 
@@ -546,7 +560,7 @@ export default function CheckoutPage() {
                     <Loader2 className="w-5 h-5 animate-spin" /> Processing...
                   </>
                 ) : (
-                  isDigital ? `Pay & Get Instant Access - ${formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}` : `Place Order - ${formatPrice(rawCheckoutPrice + baseDeliveryChargeInBDT)}`
+                  isDigital ? `Pay & Get Instant Access - ${formatPrice(finalTotalAmountInUSD)}` : `Place Order - ${formatPrice(finalTotalAmountInUSD)}`
                 )}
               </button>
             </div>

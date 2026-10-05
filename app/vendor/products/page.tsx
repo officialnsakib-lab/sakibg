@@ -20,30 +20,45 @@ export default function MyProductsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  // Fetch products
+  // Fetch products with timeout protection
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      const params: any = {};
+      if (filter && filter !== 'all') {
+        params.status = filter;
+      }
+
+      // টোকেন বা কুকি নিশ্চিতভাবে পাঠানোর ব্যবস্থা
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await axios.get('/api/products/my-products', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { status: filter }
+        headers,
+        withCredentials: true,
+        params,
+        timeout: 8000 // ৮ সেকেন্ডের বেশি সময় নিলে লোডিং অটো বন্ধ হয়ে যাবে
       });
       
-      if (response.data.success) {
-        setProducts(response.data.data.products);
+      if (response.data && response.data.success) {
+        const prodData = response.data.data?.products || response.data.products || [];
+        setProducts(Array.isArray(prodData) ? prodData : []);
+      } else {
+        setProducts([]);
       }
     } catch (error: any) {
       console.error('Fetch error:', error);
-      toast.error('Failed to fetch products');
+      // টোকেন বা অথেন্টিকেশন ইস্যু হলে লগইন পেজে রিডায়রেক্ট না করে অন্তত লোডিং বন্ধ করা হবে
+      setProducts([]);
     } finally {
-      setLoading(false);
+      setLoading(false); // লোডিং ১০০% বন্ধ হবেই
     }
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProducts();
-    }
+    fetchProducts();
   }, [filter, token]);
 
   // Delete product
@@ -54,10 +69,11 @@ export default function MyProductsPage() {
     
     try {
       const response = await axios.delete(`/api/products/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        withCredentials: true
       });
       
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         toast.success('Product deleted successfully');
         fetchProducts();
       }
@@ -76,7 +92,7 @@ export default function MyProductsPage() {
       case 'rejected':
         return <span className="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">Rejected</span>;
       default:
-        return <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">{status}</span>;
+        return <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">{status || 'Pending'}</span>;
     }
   };
 
@@ -86,7 +102,7 @@ export default function MyProductsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-950">My Products</h1>
-          <p className="text-gray-600 text-sm mt-1">Manage your uploaded digital and physical products</p>
+          <p className="text-gray-600 text-sm mt-1">Manage your uploaded physical products and food items</p>
         </div>
         
         <Link
@@ -124,10 +140,8 @@ export default function MyProductsPage() {
       ) : products.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => {
-            const isPhysical = product.productType === 'physical';
-            const viewUrl = isPhysical 
-              ? `/products/${product._id}` 
-              : `/digital-products/${product._id}`;
+            const viewUrl = `/products/${product._id}`;
+            const stockCount = product.stock ?? product.stockQuantity ?? 0;
 
             return (
               <div key={product._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between transition-all hover:shadow-md">
@@ -153,8 +167,8 @@ export default function MyProductsPage() {
 
                     {/* Type Badge */}
                     <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white px-2.5 py-0.5 rounded-md text-xs flex items-center gap-1">
-                      {isPhysical ? <Box className="w-3.5 h-3.5 text-orange-400" /> : <Package className="w-3.5 h-3.5 text-indigo-300" />}
-                      <span className="capitalize">{product.productType || 'digital'}</span>
+                      <Box className="w-3.5 h-3.5 text-orange-400" />
+                      <span className="capitalize">Physical / Food</span>
                     </div>
                   </div>
 
@@ -183,11 +197,9 @@ export default function MyProductsPage() {
                         <span className="text-xs text-gray-500 block">
                           Sales: <strong className="text-gray-800">{product.sales || 0}</strong>
                         </span>
-                        {isPhysical && (
-                          <span className="text-xs text-gray-500 block">
-                            Stock: <strong className={product.stockQuantity > 0 ? "text-green-600" : "text-red-600"}>{product.stockQuantity ?? 0}</strong>
-                          </span>
-                        )}
+                        <span className="text-xs text-gray-500 block">
+                          Stock: <strong className={stockCount > 0 ? "text-green-600" : "text-red-600"}>{stockCount}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>

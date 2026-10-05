@@ -39,13 +39,14 @@ export default function FeaturedProducts() {
             <Sparkles className="w-6 h-6 text-yellow-500" />
             Featured Products
           </h2>
-          <Link href="/digital-products?sort=featured" className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-1">
+          {/* ফিজিক্যাল প্রোডাক্ট শপের সাথে লিংক আপডেট করা হলো */}
+          <Link href="/physical-products?sort=featured" className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-1">
             View All <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {products.map((product) => (
+          {products.pop().map ? null : products.map((product) => (
             <HomeProductCard key={product._id} product={product} />
           ))}
         </div>

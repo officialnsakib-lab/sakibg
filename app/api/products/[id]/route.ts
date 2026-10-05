@@ -56,13 +56,15 @@ export async function GET(
           salePrice: 1,
           discountPercent: 1,
           thumbnailUrl: 1,
-          previewImages: 1,
+          images: 1,
           demoUrl: 1,
           videoUrl: 1,
           features: 1,
           requirements: 1,
-          documentation: 1,
-          version: 1,
+          stock: 1,
+          sku: 1,
+          weight: 1,
+          dimensions: 1,
           averageRating: 1,
           totalReviews: 1,
           sales: 1,
@@ -95,12 +97,12 @@ export async function GET(
     
     const product = productResult[0];
     
-    // Get related products
+    // Get related products (শুধুমাত্র ফিজিক্যাল প্রোডাক্টের মধ্য থেকে)
     const relatedPipeline = [
       { 
         $match: { 
           status: 'approved',
-          productType: product.productType,
+          productType: 'physical',
           category: product.category,
           _id: { $ne: new mongoose.Types.ObjectId(id) }
         } 
@@ -139,6 +141,69 @@ export async function GET(
       { success: false, error: error.message || 'Failed to get product' },
       { status: 500 }
     );
+  }
+}
+
+// ============ UPDATE PRODUCT (PUT) ============
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB();
+    const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid product ID' }, { status: 400 });
+    }
+
+    const decoded: any = await getUserFromCookie();
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    
+    const product = await (Product as any).findById(id);
+    if (!product) {
+      return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+    }
+
+    // অথরাইজেশন চেক: অ্যাডমিন অথবা নিজস্ব ভেন্ডর কি না
+    if (decoded.role !== 'admin' && product.vendorId.toString() !== decoded.userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const updateData = {
+      title: body.title,
+      description: body.description,
+      shortDescription: body.shortDescription,
+      category: body.category,
+      subCategory: body.subCategory,
+      price: body.price,
+      salePrice: body.salePrice,
+      tags: body.tags,
+      stock: body.stockQuantity !== undefined ? parseInt(body.stockQuantity) : body.stock,
+      sku: body.sku,
+      weight: body.weight,
+      dimensions: body.dimensions,
+      isPremium: body.isPremium,
+      thumbnailUrl: body.thumbnailUrl,
+      images: body.images,
+      status: 'pending' // এডিট করার পর অ্যাডমিন রিভিউর জন্য আবার পেন্ডিং করা যেতে পারে
+    };
+
+    const updatedProduct = await (Product as any).findByIdAndUpdate(id, updateData, { new: true });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: { product: updatedProduct }
+    }, { status: 200 });
+
+  } catch (error: any) {
+    console.error('Update product error:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Update failed' }, { status: 500 });
   }
 }
 
@@ -183,7 +248,7 @@ export async function DELETE(
       );
     }
     
-    // Delete files from Cloudinary
+    // Delete files from Cloudinary if needed
     if (product.fileId) {
       await deleteFromCloudinary(product.fileId);
     }

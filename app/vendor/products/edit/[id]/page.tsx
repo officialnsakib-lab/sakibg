@@ -1,17 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { 
-  Upload, 
   X, 
   Image as ImageIcon, 
   Loader2,
-  Package,
-  Box,
   Award
 } from 'lucide-react';
 
@@ -22,23 +19,17 @@ export default function EditProductPage() {
   const { token } = useAuth();
   
   // ============ FORM STATE ============
-  const [productType, setProductType] = useState<'digital' | 'physical'>('digital');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [shortDescription, setShortDescription] = useState('');
-  const [category, setCategory] = useState('templates');
+  const [category, setCategory] = useState('electronics');
+  const [customCategory, setCustomCategory] = useState(''); // কাস্টম ক্যাটাগরি নামের জন্য স্টেট
   const [subCategory, setSubCategory] = useState('');
   const [price, setPrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [tags, setTags] = useState('');
-  const [features, setFeatures] = useState('');
-  const [requirements, setRequirements] = useState('');
-  const [demoUrl, setDemoUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [version, setVersion] = useState('1.0.0');
-  const [documentation, setDocumentation] = useState('');
   
-  // Physical product specific
+  // Physical & Food product specific
   const [stockQuantity, setStockQuantity] = useState('');
   const [sku, setSku] = useState('');
   const [weight, setWeight] = useState('');
@@ -47,10 +38,7 @@ export default function EditProductPage() {
   // Premium & Verification
   const [isPremium, setIsPremium] = useState(false);
   
-  // Files & Previews
-  const [file, setFile] = useState<File | null>(null);
-  const [existingFileUrl, setExistingFileUrl] = useState('');
-  
+  // Images & Previews
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   
@@ -62,58 +50,62 @@ export default function EditProductPage() {
   const [fetching, setFetching] = useState(true);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  const digitalCategories = [
-    'templates', 'software', 'ebooks', 'graphics', 
-    'music', 'videos', 'courses', 'plugins', 'themes', 'other'
-  ];
-  
   const physicalCategories = [
     'electronics', 'clothing', 'home-appliances', 'books', 'fitness', 
-    'toys', 'beauty', 'accessories', 'gadgets', 'other'
+    'toys', 'beauty', 'accessories', 'gadgets', 'food-items', 'other'
   ];
 
   // ============ FETCH EXISTING PRODUCT DATA ============
   useEffect(() => {
-    if (!productId || !token) return;
+    if (!productId) {
+      setFetching(false);
+      return;
+    }
 
     const fetchProductDetails = async () => {
       try {
         setFetching(true);
+        
+        const headers: any = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await axios.get(`/api/products/${productId}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers,
+          withCredentials: true,
+          timeout: 8000
         });
 
-        if (res.data.success) {
-          const p = res.data.data;
+        if (res.data && res.data.success) {
+          const p = res.data.data?.product || res.data.data || {};
           setTitle(p.title || '');
           setDescription(p.description || '');
           setShortDescription(p.shortDescription || '');
-          setProductType(p.productType || 'digital');
-          setCategory(p.category || 'templates');
+          
+          const fetchedCategory = p.category || 'electronics';
+          if (physicalCategories.includes(fetchedCategory)) {
+            setCategory(fetchedCategory);
+          } else {
+            setCategory('other');
+            setCustomCategory(fetchedCategory);
+          }
+
           setSubCategory(p.subCategory || '');
           setPrice(p.price !== undefined ? p.price.toString() : '');
           setSalePrice(p.salePrice !== undefined && p.salePrice !== null ? p.salePrice.toString() : '');
           setTags(Array.isArray(p.tags) ? p.tags.join(', ') : '');
-          setFeatures(Array.isArray(p.features) ? p.features.join(', ') : '');
-          setRequirements(Array.isArray(p.requirements) ? p.requirements.join(', ') : '');
-          setDemoUrl(p.demoUrl || '');
-          setVideoUrl(p.videoUrl || '');
-          setVersion(p.version || '1.0.0');
-          setDocumentation(p.documentation || '');
-          setStockQuantity(p.stockQuantity !== undefined ? p.stockQuantity.toString() : '');
+          setStockQuantity(p.stock !== undefined ? p.stock.toString() : (p.stockQuantity !== undefined ? p.stockQuantity.toString() : ''));
           setSku(p.sku || '');
           setWeight(p.weight || '');
           setDimensions(p.dimensions || '');
           setIsPremium(p.isPremium || false);
           
-          setExistingFileUrl(p.fileUrl || '');
           if (p.thumbnailUrl) {
             setThumbnailPreview(p.thumbnailUrl);
           }
@@ -133,18 +125,6 @@ export default function EditProductPage() {
   }, [productId, token]);
 
   // ============ FILE HANDLERS ============
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      if (selectedFile.size > 100 * 1024 * 1024) {
-        toast.error('File size must be less than 100MB');
-        return;
-      }
-      setFile(selectedFile);
-      if (errors.file) setErrors({ ...errors, file: '' });
-    }
-  };
-
   const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -184,36 +164,19 @@ export default function EditProductPage() {
     setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
-    else if (e.type === 'dragleave') setDragActive(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    const droppedFile = e.dataTransfer.files?.[0];
-    if (droppedFile) {
-      if (droppedFile.size > 100 * 1024 * 1024) {
-        toast.error('File size must be less than 100MB');
-        return;
-      }
-      setFile(droppedFile);
-      if (errors.file) setErrors({ ...errors, file: '' });
-    }
-  };
-
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
     if (!title.trim()) newErrors.title = 'Title is required';
     if (!description.trim()) newErrors.description = 'Description is required';
     if (price === '' || isNaN(parseFloat(price))) newErrors.price = 'Valid price is required';
-    if (productType === 'physical' && (!stockQuantity || parseInt(stockQuantity) < 0)) {
-      newErrors.stockQuantity = 'Stock quantity is required for physical products';
+    if (!stockQuantity || parseInt(stockQuantity) < 0) {
+      newErrors.stockQuantity = 'Stock quantity is required';
     }
+    if (!thumbnailPreview) newErrors.thumbnail = 'Main product image is required';
+    if (category === 'other' && !customCategory.trim()) {
+      newErrors.customCategory = 'Please enter custom category name';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -232,7 +195,7 @@ export default function EditProductPage() {
       return res.data.secure_url;
     } catch (err: any) {
       console.error('Cloudinary Upload Error:', err.response?.data);
-      throw new Error(err.response?.data?.error?.message || 'Failed to upload file to Cloudinary');
+      throw new Error(err.response?.data?.error?.message || 'Failed to upload image to Cloudinary');
     }
   };
 
@@ -246,70 +209,72 @@ export default function EditProductPage() {
     }
     
     setLoading(true);
-    setUploadProgress(10);
+    setUploadProgress(20);
     
     try {
-      let fileUrl = existingFileUrl;
-      if (file) {
-        fileUrl = await uploadToCloudinary(file);
-        setUploadProgress(40);
-      }
+      toast.loading('Updating images...', { id: 'updateToast' });
 
       let thumbnailUrl = thumbnailPreview;
       if (thumbnail) {
         thumbnailUrl = await uploadToCloudinary(thumbnail);
-        setUploadProgress(60);
+        setUploadProgress(50);
       }
 
       let finalGalleryUrls = [...existingGalleryUrls];
       for (let i = 0; i < galleryImages.length; i++) {
         const url = await uploadToCloudinary(galleryImages[i]);
         finalGalleryUrls.push(url);
-        setUploadProgress(60 + Math.round(((i + 1) / galleryImages.length) * 30));
+        setUploadProgress(50 + Math.round(((i + 1) / galleryImages.length) * 35));
       }
 
-      setUploadProgress(95);
+      setUploadProgress(90);
+      toast.loading('Saving product changes...', { id: 'updateToast' });
+
+      const finalCategory = category === 'other' 
+        ? customCategory.trim().toLowerCase().replace(/\s+/g, '-') 
+        : category;
 
       const payload = {
         title,
         description,
         shortDescription,
-        productType,
-        category,
+        productType: 'physical',
+        category: finalCategory,
         subCategory,
         price: parseFloat(price),
         salePrice: salePrice ? parseFloat(salePrice) : null,
         tags: tags ? tags.split(',').map(t => t.trim()) : [],
-        features: features ? features.split(',').map(f => f.trim()) : [],
-        requirements: requirements ? requirements.split(',').map(r => r.trim()) : [],
-        demoUrl,
-        videoUrl,
-        version: version || '1.0.0',
-        documentation,
-        stockQuantity: productType === 'physical' ? parseInt(stockQuantity || '0') : 0,
+        stockQuantity: parseInt(stockQuantity || '0'),
         sku,
         weight,
         dimensions,
         isPremium,
-        fileUrl,
         thumbnailUrl,
         images: finalGalleryUrls
       };
 
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await axios.put(`/api/products/${productId}`, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers,
+        withCredentials: true
       });
       
       setUploadProgress(100);
-      if (response.data.success) {
+      toast.dismiss('updateToast');
+
+      if (response.data && response.data.success) {
         toast.success('Product updated successfully!');
         router.push('/vendor/products');
+      } else {
+        throw new Error(response.data.error || 'Update failed');
       }
     } catch (error: any) {
       console.error('Update error:', error);
+      toast.dismiss('updateToast');
       const errorMessage = error.response?.data?.error || error.message || 'Update failed';
       toast.error(errorMessage);
     } finally {
@@ -329,44 +294,12 @@ export default function EditProductPage() {
   return (
     <div className="max-w-5xl mx-auto pb-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
-        <p className="text-gray-600 mt-1">Update your product information and assets</p>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Product / Food Item</h1>
+        <p className="text-gray-600 mt-1">Update your physical product or food item information</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Product Type */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Product Type <span className="text-red-500">*</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => { setProductType('digital'); setCategory('templates'); }}
-              className={`p-5 rounded-lg border-2 text-center transition-all ${
-                productType === 'digital' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Package className={`w-10 h-10 mx-auto mb-2 ${productType === 'digital' ? 'text-indigo-600' : 'text-gray-400'}`} />
-              <div className="font-semibold text-gray-900">Digital Product</div>
-              <div className="text-xs text-gray-500 mt-1">Software, eBook, Template, Downloadable files</div>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => { setProductType('physical'); setCategory('electronics'); }}
-              className={`p-5 rounded-lg border-2 text-center transition-all ${
-                productType === 'physical' ? 'border-orange-500 bg-orange-50 shadow-md' : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Box className={`w-10 h-10 mx-auto mb-2 ${productType === 'physical' ? 'text-orange-600' : 'text-gray-400'}`} />
-              <div className="font-semibold text-gray-900">Physical Product</div>
-              <div className="text-xs text-gray-500 mt-1">Shippable goods, merchandise, items requiring inventory</div>
-            </button>
-          </div>
-        </div>
-
         {/* Basic Info */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -377,7 +310,8 @@ export default function EditProductPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 bg-white text-neutral-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Product title"
               />
               {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
             </div>
@@ -388,8 +322,9 @@ export default function EditProductPage() {
                 type="text"
                 value={shortDescription}
                 onChange={(e) => setShortDescription(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 maxLength={300}
+                placeholder="Brief summary"
               />
             </div>
 
@@ -399,7 +334,8 @@ export default function EditProductPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 bg-white text-neutral-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Detailed description..."
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
             </div>
@@ -415,11 +351,11 @@ export default function EditProductPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none capitalize"
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none capitalize"
               >
-                {(productType === 'digital' ? digitalCategories : physicalCategories).map((cat) => (
+                {physicalCategories.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    {cat === 'other' ? 'Other (Type your own)' : cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   </option>
                 ))}
               </select>
@@ -433,7 +369,8 @@ export default function EditProductPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 min="0"
                 step="0.01"
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                className={`w-full px-4 py-2.5 bg-white text-neutral-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="49.99"
               />
               {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
             </div>
@@ -446,10 +383,28 @@ export default function EditProductPage() {
                 onChange={(e) => setSalePrice(e.target.value)}
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="39.99"
               />
             </div>
           </div>
+
+          {/* Custom Category Input (Shows up when 'Other' is selected) */}
+          {category === 'other' && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Enter Custom Category Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                className={`w-full px-4 py-2.5 bg-white text-neutral-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.customCategory ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="e.g. Handmade Crafts, Organic Spices"
+              />
+              {errors.customCategory && <p className="text-xs text-red-500 mt-1">{errors.customCategory}</p>}
+            </div>
+          )}
 
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
@@ -457,100 +412,71 @@ export default function EditProductPage() {
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="e.g. react, nextjs, ecommerce"
+              className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="food, burger, organic, gadget"
             />
           </div>
         </div>
 
-        {/* Physical Product Specific Fields */}
-        {productType === 'physical' && (
-          <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Inventory & Shipping Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity <span className="text-red-500">*</span></label>
-                <input
-                  type="number"
-                  value={stockQuantity}
-                  onChange={(e) => setStockQuantity(e.target.value)}
-                  min="0"
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.stockQuantity ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.stockQuantity && <p className="text-xs text-red-500 mt-1">{errors.stockQuantity}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                <input
-                  type="text"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Weight</label>
-                <input
-                  type="text"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="e.g. 500g"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Dimensions</label>
-                <input
-                  type="text"
-                  value={dimensions}
-                  onChange={(e) => setDimensions(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="e.g. 10x5x2 cm"
-                />
-              </div>
+        {/* Inventory & Shipping Details */}
+        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500 border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Inventory & Shipping Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                value={stockQuantity}
+                onChange={(e) => setStockQuantity(e.target.value)}
+                min="0"
+                className={`w-full px-4 py-2.5 bg-white text-neutral-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${errors.stockQuantity ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="100"
+              />
+              {errors.stockQuantity && <p className="text-xs text-red-500 mt-1">{errors.stockQuantity}</p>}
             </div>
-          </div>
-        )}
 
-        {/* Product File Upload */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Main File</h2>
-          {existingFileUrl && !file && (
-            <p className="text-xs text-indigo-600 mb-3 font-medium">Current file is already attached. Upload a new one only if you want to replace it.</p>
-          )}
-          <div 
-            onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-              dragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <input ref={fileInputRef} type="file" onChange={handleFileSelect} className="hidden" />
-            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            {file ? (
-              <div>
-                <p className="font-medium text-gray-900">{file.name}</p>
-                <p className="text-xs text-gray-500 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-              </div>
-            ) : (
-              <div>
-                <p className="font-medium text-gray-700">{existingFileUrl ? 'Replace existing file' : 'Click to upload or drag and drop'}</p>
-                <p className="text-xs text-gray-400 mt-1">ZIP, PDF, RAR, software package (Up to 100MB)</p>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+              <input
+                type="text"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="PROD-SKU-001"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Weight</label>
+              <input
+                type="text"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="e.g. 500g"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dimensions</label>
+              <input
+                type="text"
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white text-neutral-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="e.g. 10x5x2 cm"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Thumbnail */}
+        {/* Main Product Image */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Thumbnail</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Main Product Image <span className="text-red-500">*</span></h2>
           <div className="flex items-center gap-6">
             {thumbnailPreview ? (
               <div className="relative">
-                <img src={thumbnailPreview} className="w-32 h-32 object-cover rounded-lg border border-gray-200" alt="Thumbnail Preview" />
+                <img src={thumbnailPreview} className="w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm" alt="Thumbnail Preview" />
                 <button 
                   type="button" 
                   onClick={() => { setThumbnail(null); setThumbnailPreview(''); }} 
@@ -562,7 +488,7 @@ export default function EditProductPage() {
             ) : (
               <div 
                 onClick={() => thumbnailInputRef.current?.click()} 
-                className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 bg-gray-50"
+                className={`w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 bg-gray-50 ${errors.thumbnail ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
               >
                 <ImageIcon className="w-8 h-8 text-gray-400" />
                 <span className="text-xs text-gray-500 mt-2">Add Image</span>
@@ -570,6 +496,7 @@ export default function EditProductPage() {
             )}
             <input ref={thumbnailInputRef} type="file" onChange={handleThumbnailSelect} className="hidden" accept="image/*" />
           </div>
+          {errors.thumbnail && <p className="text-xs text-red-500 mt-1">{errors.thumbnail}</p>}
         </div>
 
         {/* Gallery Images */}
@@ -578,7 +505,7 @@ export default function EditProductPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             {/* Existing Gallery Images */}
             {existingGalleryUrls.map((url, index) => (
-              <div key={`existing-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden">
+              <div key={`existing-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                 <img src={url} alt={`Existing ${index}`} className="w-full h-28 object-cover" />
                 <button
                   type="button"
@@ -592,7 +519,7 @@ export default function EditProductPage() {
 
             {/* New Gallery Previews */}
             {galleryPreviews.map((preview, index) => (
-              <div key={`new-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden">
+              <div key={`new-${index}`} className="relative w-full h-28 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                 <img src={preview} alt={`New Preview ${index}`} className="w-full h-28 object-cover" />
                 <button
                   type="button"

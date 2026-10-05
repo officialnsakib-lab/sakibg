@@ -8,7 +8,6 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 type UserRole = 'customer' | 'vendor';
-type VendorType = 'digital_products' | 'physical_products' | 'both';
 
 function RegisterForm() {
   const router = useRouter();
@@ -21,7 +20,6 @@ function RegisterForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('customer');
-  const [vendorType, setVendorType] = useState<VendorType>('digital_products');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -132,7 +130,7 @@ function RegisterForm() {
         email,
         password,
         role,
-        vendorType: role === 'vendor' ? vendorType : undefined
+        vendorType: role === 'vendor' ? 'physical_products' : undefined
       });
       
       if (response.data.success) {
@@ -195,27 +193,9 @@ function RegisterForm() {
           >
             <div className="text-2xl mb-1">💼</div>
             <div className="font-semibold text-sm">Vendor</div>
-            <div className="text-xs text-slate-500">Sell products</div>
+            <div className="text-xs text-slate-500">Sell products & food</div>
           </button>
         </div>
-
-        {/* Vendor Type Selection */}
-        {role === 'vendor' && (
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              What do you want to sell?
-            </label>
-            <select
-              value={vendorType}
-              onChange={(e) => setVendorType(e.target.value as VendorType)}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-200"
-            >
-              <option value="digital_products">Digital Products</option>
-              <option value="physical_products">Physical Products</option>
-              <option value="both">Both (Digital & Physical)</option>
-            </select>
-          </div>
-        )}
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleRegister} noValidate>

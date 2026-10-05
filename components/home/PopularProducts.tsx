@@ -39,7 +39,8 @@ export default function PopularProducts() {
             <TrendingUp className="w-6 h-6 text-red-500" />
             Popular Products
           </h2>
-          <Link href="/digital-products?sort=popular" className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-1">
+          {/* ফিজিক্যাল প্রোডাক্ট শপের সাথে লিংক আপডেট করা হলো */}
+          <Link href="/physical-products?sort=popular" className="text-indigo-600 font-semibold hover:text-indigo-800 flex items-center gap-1">
             View All <ChevronRight className="w-4 h-4" />
           </Link>
         </div>

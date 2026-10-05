@@ -6,24 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হয়েছে
+import { useCurrency } from '@/context/CurrencyContext';
 import { toast } from 'react-hot-toast';
 import { 
   Star, 
-  Eye, 
-  BadgeCheck, 
   Award, 
   Sparkles, 
   Package, 
-  Clock, 
-  TrendingUp, 
   Heart, 
   CheckCircle, 
-  Download,
-  DownloadCloud,
-  ArrowRight,
   ShoppingCart,
-  ShoppingBag
+  ShoppingBag,
+  Box
 } from 'lucide-react';
 import { formatNumber, calculateDiscount } from '@/lib/format';
 
@@ -33,16 +27,14 @@ interface ProductCardProps {
     title: string;
     category: string;
     productType?: string;
-    product_type?: string;
-    price: number;
-    salePrice: number | null;
+    price: number | any;
+    salePrice: number | any;
     thumbnailUrl: string;
     images?: string[];
     averageRating: number;
     totalReviews: number;
     sales: number;
     views: number;
-    downloads: number;
     isFeatured: boolean;
     isBestSeller: boolean;
     isVerified: boolean;
@@ -62,48 +54,44 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
-  const { formatPrice } = useCurrency(); // ২. হুক কল করা হয়েছে
+  const { formatPrice } = useCurrency();
 
-  // হোভার বা গ্যালারি ছবি পরিবর্তনের জন্য স্টেট
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // থাম্বনেইল এবং গ্যালারি ইমেজগুলো মিলিয়ে একটি লিস্ট তৈরি করা
   const allImages = [
     product.thumbnailUrl,
     ...(product.images || [])
   ].filter(Boolean);
 
   const isLoved = isInWishlist(product._id);
-
-  const type = product.productType || product.product_type || '';
-  const isDigital = type.toLowerCase() === 'digital';
   
-  const productDetailPageUrl = isDigital 
-    ? `/digital-products/${product._id}` 
-    : `/physical-products/${product._id}`;
+  // 🔴 ফিক্সড লিংক: সঠিক ফিজিক্যাল প্রোডাক্ট ডিটেইল পেজ রাউট
+  const productDetailPageUrl = `/physical-products/${product._id}`;
 
-  const originalPrice = Number(product.price) || 0;
-  const salePrice = product.salePrice ? Number(product.salePrice) : originalPrice;
+  const parsePrice = (val: any) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'object') {
+      return Number(val.$numberDecimal || val.value || 0) || 0;
+    }
+    return Number(val) || 0;
+  };
+
+  const originalPrice = parsePrice(product.price);
+  const rawSalePrice = parsePrice(product.salePrice);
+  const salePrice = rawSalePrice > 0 && rawSalePrice < originalPrice ? rawSalePrice : originalPrice;
 
   const discount = calculateDiscount(originalPrice, salePrice);
 
-  const handleInstallAndGet = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error('Please login to get this product');
-      router.push(`/login?redirect=/checkout/${product._id}?type=digital`);
-      return;
-    }
-    
-    router.push(`/checkout/${product._id}?type=digital`);
+  const sanitizedProduct = {
+    ...product,
+    price: originalPrice,
+    salePrice: rawSalePrice > 0 ? rawSalePrice : null
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
+    addToCart(sanitizedProduct);
     toast.success('Added to cart successfully!');
   };
 
@@ -117,7 +105,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       return;
     }
     
-    addToCart(product);
+    addToCart(sanitizedProduct);
     router.push(`/checkout/${product._id}`);
   };
 
@@ -197,14 +185,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Content Section */}
         <div className="p-2 sm:p-4">
           <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
-            <span className="text-[9px] sm:text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 sm:px-2 py-0.5 rounded-full truncate">
+            <span className="text-[9px] sm:text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 sm:px-2 py-0.5 rounded-full truncate capitalize">
               {product.category || 'General'}
             </span>
-            {product.isVerified && (
-              <span className="text-[8px] sm:text-[10px] font-semibold text-blue-600 bg-blue-50 px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <BadgeCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> VERIFIED
-              </span>
-            )}
+            <span className="text-[8px] sm:text-[10px] font-semibold text-orange-600 bg-orange-50 px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <Box className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> PHYSICAL / FOOD
+            </span>
           </div>
 
           <Link href={productDetailPageUrl}>
@@ -235,9 +221,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          {/* Pricing (৩. formatPrice ব্যবহার করে ডাইনামিক কারেন্সি দেখানো হচ্ছে) */}
+          {/* Pricing */}
           <div className="mb-2 sm:mb-4">
-            {product.salePrice && salePrice < originalPrice ? (
+            {rawSalePrice > 0 && rawSalePrice < originalPrice ? (
               <div className="flex items-baseline gap-1 sm:gap-2">
                 <span className="text-sm sm:text-xl font-extrabold text-indigo-600 leading-none">
                   {formatPrice(salePrice)}
@@ -258,37 +244,20 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Footer Actions & Vendor */}
       <div className="p-2 sm:p-4 pt-0 mt-auto">
         <div className="mb-2">
-          {isDigital ? (
-            <div className="grid grid-cols-2 gap-1 sm:gap-2">
-              <button
-                onClick={handleInstallAndGet}
-                className="py-1 sm:py-2.5 px-1 sm:px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition shadow-sm truncate"
-              >
-                <DownloadCloud className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" /> Install
-              </button>
-              <button
-                onClick={handleInstallAndGet}
-                className="py-1 sm:py-2.5 px-1 sm:px-3 bg-gray-900 hover:bg-black text-white rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition shadow-sm truncate"
-              >
-                Get Now <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-1 sm:gap-2">
-              <button
-                onClick={handleAddToCart}
-                className="py-1 sm:py-2.5 px-1 sm:px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition truncate"
-              >
-                <ShoppingCart className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" /> Cart
-              </button>
-              <button
-                onClick={handleBuyNow}
-                className="py-1 sm:py-2.5 px-1 sm:px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition shadow-sm truncate"
-              >
-                <ShoppingBag className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" /> Buy Now
-              </button>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-1 sm:gap-2">
+            <button
+              onClick={handleAddToCart}
+              className="py-1 sm:py-2.5 px-1 sm:px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition truncate"
+            >
+              <ShoppingCart className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" /> Cart
+            </button>
+            <button
+              onClick={handleBuyNow}
+              className="py-1 sm:py-2.5 px-1 sm:px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-bold text-[9px] sm:text-xs flex items-center justify-center gap-0.5 sm:gap-1.5 transition shadow-sm truncate"
+            >
+              <ShoppingBag className="w-2.5 h-2.5 sm:w-4 sm:h-4 flex-shrink-0" /> Buy Now
+            </button>
+          </div>
         </div>
 
         {/* Vendor Info */}

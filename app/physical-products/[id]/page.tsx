@@ -9,11 +9,16 @@ import { Loader2, Package, ChevronRight, Globe, ShieldCheck, Zap, ArrowRight, Ch
 import ProductInfo from '@/components/product/ProductInfo';
 import ReviewsSection from '@/components/product/ReviewsSection';
 import RelatedProducts from '@/components/product/RelatedProducts';
+import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
+import { useCart } from '@/context/CartContext'; // ২. কার্ট কন্টেস্ট ইমপোর্ট করা হলো
 
 export default function PhysicalProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const productId = params.id as string;
+
+  const { formatPrice } = useCurrency(); // ৩. কারেন্সি ফরম্যাটার কল করা হলো
+  const { addToCart } = useCart(); // ৪. কার্টে প্রোডাক্ট যোগ করার ফাংশন
 
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -41,12 +46,33 @@ export default function PhysicalProductDetailsPage() {
     if (productId) fetchProduct();
   }, [productId]);
 
+  // প্রাইজ নিখুঁতভাবে পার্স করার ফাংশন
+  const parsePrice = (val: any) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'object') {
+      return Number(val.$numberDecimal || val.value || 0) || 0;
+    }
+    return Number(val) || 0;
+  };
+
+  const originalPrice = product ? parsePrice(product.price) : 0;
+  const rawSalePrice = product ? parsePrice(product.salePrice) : 0;
+  const productPrice = rawSalePrice > 0 && rawSalePrice < originalPrice ? rawSalePrice : originalPrice;
+
   // ফিজিক্যাল প্রোডাক্ট কার্টে যোগ করার হ্যান্ডলার
   const handleAddToCart = async () => {
     try {
       setSubmitting(true);
-      // আপনার কার্ট API বা লজিক এখানে যুক্ত করুন
-      toast.success('Product added to cart successfully!');
+      if (product) {
+        const cartItem = {
+          ...product,
+          price: originalPrice,
+          salePrice: rawSalePrice > 0 ? rawSalePrice : null,
+          quantity: 1
+        };
+        addToCart(cartItem);
+        toast.success('Product added to cart successfully!');
+      }
     } catch (err) {
       toast.error('Failed to add to cart');
     } finally {
@@ -56,6 +82,15 @@ export default function PhysicalProductDetailsPage() {
 
   // ফিজিক্যাল প্রোডাক্ট চেকআউট / বাই নাউ হ্যান্ডলার
   const handleBuyNow = () => {
+    if (product) {
+      const cartItem = {
+        ...product,
+        price: originalPrice,
+        salePrice: rawSalePrice > 0 ? rawSalePrice : null,
+        quantity: 1
+      };
+      addToCart(cartItem);
+    }
     router.push(`/checkout/${productId}`);
   };
 
@@ -151,8 +186,9 @@ export default function PhysicalProductDetailsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs text-slate-400">Total Price</span>
+                  {/* ৫. স্ট্যাটিক সাইন পরিবর্তন করে ডাইনামিক formatPrice ব্যবহার করা হলো */}
                   <div className="text-2xl font-extrabold text-cyan-400">
-                    ${product.price} <span className="text-xs text-slate-400 font-normal">USD</span>
+                    {formatPrice(productPrice)}
                   </div>
                 </div>
                 <div className="text-right">
@@ -162,7 +198,7 @@ export default function PhysicalProductDetailsPage() {
                 </div>
               </div>
 
-              {/* 🔴 Add to Cart এবং Buy Now বাটন */}
+              {/* Add to Cart এবং Buy Now বাটন */}
               <div className="flex items-center gap-3 w-full">
                 <button
                   onClick={handleAddToCart}

@@ -4,17 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
 import { toast } from 'react-hot-toast';
 import { 
   Star, 
   ShoppingCart, 
-  Eye, 
   BadgeCheck,
   Award,
   Sparkles,
   Package,
   Globe,
-  TrendingUp,
   Heart,
   Download
 } from 'lucide-react';
@@ -28,8 +27,8 @@ interface HomeProductCardProps {
     productType?: string;
     isDigital?: boolean;
     type?: string;
-    price: number;
-    salePrice: number | null;
+    price: number | any;
+    salePrice: number | any;
     thumbnailUrl: string;
     averageRating: number;
     totalReviews: number;
@@ -51,6 +50,7 @@ interface HomeProductCardProps {
 export default function HomeProductCard({ product }: HomeProductCardProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency(); // ২. কারেন্সি ফরম্যাটার কল করা হলো
   const [isWishlisted, setIsWishlisted] = React.useState(false);
 
   const isDigital = 
@@ -63,7 +63,20 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
     ? `/digital-products/${product._id}` 
     : `/physical-products/${product._id}`;
 
-  const discount = calculateDiscount(product.price, product.salePrice || 0);
+  // নিখুঁতভাবে প্রাইজ নাম্বার কনভার্ট করার ফাংশন
+  const parsePrice = (val: any) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'object') {
+      return Number(val.$numberDecimal || val.value || 0) || 0;
+    }
+    return Number(val) || 0;
+  };
+
+  const originalPrice = parsePrice(product.price);
+  const rawSalePrice = parsePrice(product.salePrice);
+  const salePrice = rawSalePrice > 0 && rawSalePrice < originalPrice ? rawSalePrice : originalPrice;
+
+  const discount = calculateDiscount(originalPrice, salePrice);
 
   const handleAction = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,7 +94,7 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition-all group border border-gray-100 flex flex-col justify-between w-full">
       <div>
-        {/* Image Container: মোবাইল স্ক্রিনে উচ্চতা আরও কমিয়ে h-24 করা হয়েছে */}
+        {/* Image Container */}
         <Link href={productDetailUrl} className="relative h-24 sm:h-40 bg-gradient-to-br from-indigo-500 to-violet-600 overflow-hidden block w-full">
           {product.thumbnailUrl ? (
             <img
@@ -140,7 +153,7 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
           </button>
         </Link>
 
-        {/* Content: প্যাডিং ও মার্জিন কমিয়ে কম্প্যাক্ট করা হয়েছে */}
+        {/* Content */}
         <div className="p-2 sm:p-3 flex flex-col">
           {/* Category */}
           <span className="text-[8px] sm:text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full capitalize self-start mb-0.5 truncate max-w-full">
@@ -169,13 +182,14 @@ export default function HomeProductCard({ product }: HomeProductCardProps) {
       <div className="p-2 sm:p-3 pt-0 mt-auto">
         <div className="flex justify-between items-center gap-1">
           <div>
-            {product.salePrice ? (
+            {/* ৩. স্ট্যাটিক ডলার সাইন পরিবর্তন করে ডাইনামিক formatPrice ব্যবহার করা হলো */}
+            {rawSalePrice > 0 && rawSalePrice < originalPrice ? (
               <div className="flex items-baseline gap-1">
-                <span className="text-xs sm:text-lg font-extrabold text-indigo-600">${product.salePrice}</span>
-                <span className="text-[9px] sm:text-xs text-gray-400 line-through">${product.price}</span>
+                <span className="text-xs sm:text-lg font-extrabold text-indigo-600">{formatPrice(salePrice)}</span>
+                <span className="text-[9px] sm:text-xs text-gray-400 line-through">{formatPrice(originalPrice)}</span>
               </div>
             ) : (
-              <span className="text-xs sm:text-lg font-extrabold text-indigo-600">${product.price}</span>
+              <span className="text-xs sm:text-lg font-extrabold text-indigo-600">{formatPrice(originalPrice)}</span>
             )}
           </div>
 

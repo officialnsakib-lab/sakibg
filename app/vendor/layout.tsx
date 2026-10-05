@@ -13,9 +13,7 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X,
-  Globe,
-  Download
+  X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast/headless';
 
@@ -46,14 +44,16 @@ export default function VendorLayout({
     
     checkAuth();
   }, [loading, isAuthenticated, isVendor, router]);
-    useEffect(() => {
-      // Check if user is banned
-      if (user?.isBanned) {
-        toast.error('Your account has been banned');
-        logout();
-        router.push('/login?banned=true');
-      }
-    }, [user]);
+
+  useEffect(() => {
+    // Check if user is banned
+    if (user?.isBanned) {
+      toast.error('Your account has been banned');
+      logout();
+      router.push('/login?banned=true');
+    }
+  }, [user]);
+
   // Loading state
   if (loading || checking) {
     return (

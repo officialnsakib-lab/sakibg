@@ -130,7 +130,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products, categories, or vendors..."
+                placeholder="Search for physical products, food items, categories..."
                 className="w-full bg-white text-neutral-900 px-4 py-2.5 pr-12 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
               />
               <button
@@ -148,7 +148,7 @@ export default function Navbar() {
           {/* Right Action Icons & Currency Switcher */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
-            {/* Currency Selector Dropdown (Updated for all currencies) */}
+            {/* Currency Selector Dropdown */}
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
@@ -275,23 +275,14 @@ export default function Navbar() {
               {pathname === '/' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>}
             </Link>
 
-            <Link 
-              href="/digital-products" 
-              className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
-                pathname === '/digital-products' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
-              }`}
-            >
-              Digital Products
-              {pathname === '/digital-products' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>}
-            </Link>
-
+            {/* Shop Page Link (Updated to /physical-products) */}
             <Link 
               href="/physical-products" 
               className={`text-sm font-medium transition-colors relative py-3 shrink-0 ${
                 pathname === '/physical-products' ? 'text-amber-400 font-semibold' : 'text-amber-100/80 hover:text-amber-400'
               }`}
             >
-              Physical Products
+              Shop
               {pathname === '/physical-products' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400"></span>}
             </Link>
 
@@ -403,7 +394,7 @@ export default function Navbar() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
+              placeholder="Search products or food items..."
               className="flex-1 bg-white text-neutral-900 px-4 py-2.5 rounded-xl text-sm focus:outline-none"
             />
             <button type="submit" className="px-4 py-2.5 bg-amber-400 text-neutral-950 font-semibold rounded-xl text-sm shrink-0">
@@ -413,8 +404,8 @@ export default function Navbar() {
 
           <div className="flex flex-col space-y-1 pt-2 border-t border-amber-500/15">
             <Link href="/" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Home</Link>
-            <Link href="/digital-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Digital Products</Link>
-            <Link href="/physical-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Physical Products</Link>
+            {/* Mobile Shop Page Link (Updated to /physical-products) */}
+            <Link href="/physical-products" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Shop</Link>
             <Link href="/categories" className="py-2.5 px-3 rounded-lg text-amber-100 hover:bg-white/5 hover:text-amber-400 font-medium transition-colors">Categories</Link>
             
             <div className="py-2 px-3 text-xs font-bold text-amber-400 uppercase tracking-wider">More Menu</div>

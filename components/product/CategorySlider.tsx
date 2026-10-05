@@ -46,7 +46,8 @@ export default function CategorySlider({ categories, selectedCategory, onSelectC
       {showLeftArrow && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-green-600 transition-colors"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+          aria-label="Scroll left"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -56,7 +57,7 @@ export default function CategorySlider({ categories, selectedCategory, onSelectC
       <div
         ref={scrollRef}
         onScroll={checkArrows}
-        className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
+        className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth px-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* All Category */}
@@ -64,11 +65,11 @@ export default function CategorySlider({ categories, selectedCategory, onSelectC
           onClick={() => onSelectCategory('all')}
           className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             selectedCategory === 'all'
-              ? 'bg-green-600 text-white shadow-md'
+              ? 'bg-indigo-600 text-white shadow-md'
               : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
           }`}
         >
-          All Websites
+          All Products
         </button>
 
         {/* Category Items */}
@@ -78,11 +79,13 @@ export default function CategorySlider({ categories, selectedCategory, onSelectC
             onClick={() => onSelectCategory(cat.name)}
             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               selectedCategory === cat.name
-                ? 'bg-green-600 text-white shadow-md'
+                ? 'bg-indigo-600 text-white shadow-md'
                 : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
             }`}
           >
-            <span className="capitalize">{cat.name}</span>
+            <span className="capitalize">
+              {cat.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+            </span>
             <span className={`ml-1 text-xs ${selectedCategory === cat.name ? 'text-white/70' : 'text-gray-400'}`}>
               ({cat.count})
             </span>
@@ -94,7 +97,8 @@ export default function CategorySlider({ categories, selectedCategory, onSelectC
       {showRightArrow && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-green-600 transition-colors"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-indigo-600 transition-colors border border-gray-100"
+          aria-label="Scroll right"
         >
           <ChevronRight className="w-5 h-5" />
         </button>

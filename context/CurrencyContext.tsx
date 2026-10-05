@@ -11,10 +11,10 @@ interface CurrencyDetails {
   name: string;
 }
 
-// প্রতিটি কারেন্সির এক্সচেঞ্জ রেট (বেস কারেন্সি USD ধরে)
+// বেস কারেন্সি USD ধরে অন্যান্য কারেন্সির এক্সচেঞ্জ রেট
 const currencyDetails: Record<Currency, CurrencyDetails> = {
   USD: { symbol: '$', rateAgainstUSD: 1, name: 'US Dollar' },
-  BDT: { symbol: '৳', rateAgainstUSD: 123, name: 'Bangladeshi Taka' }, // ১ ডলার = ১২৩ টাকা
+  BDT: { symbol: '৳', rateAgainstUSD: 123, name: 'Bangladeshi Taka' }, // ১ ডলার = ১২৩ টাকা ধরে
   EUR: { symbol: '€', rateAgainstUSD: 0.92, name: 'Euro' },
   GBP: { symbol: '£', rateAgainstUSD: 0.78, name: 'British Pound' },
   INR: { symbol: '₹', rateAgainstUSD: 83.5, name: 'Indian Rupee' },
@@ -40,7 +40,7 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>('BDT'); // ইউজার ডিফল্ট BDT দেখতে পারে
+  const [currency, setCurrencyState] = useState<Currency>('USD'); // ডিফল্ট বেস কারেন্সি ডলার রাখা হলো
   
   useEffect(() => {
     const savedCurrency = localStorage.getItem('preferred_currency') as Currency;
@@ -57,12 +57,12 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const currentCurrencyInfo = currencyDetails[currency] || currencyDetails['USD'];
   const exchangeRate = currentCurrencyInfo.rateAgainstUSD;
 
-  // ডাটাবেজে থাকা USD অ্যামাউন্টকে ইউজারের সিলেক্ট করা কারেন্সিতে কনভার্ট করা
+  // ডাটাবেজের USD অ্যামাউন্টকে ইউজারের সিলেক্ট করা কারেন্সিতে কনভার্ট করা
   const convertPrice = (amountInUSD: number) => {
     return (amountInUSD || 0) * exchangeRate;
   };
 
-  // সঠিক সিম্বল এবং ফরম্যাট অনুযায়ী দাম রিটার্ন করা
+  // সঠিক সিম্বল এবং ফরম্যাট অনুযায়ী দাম রিটার্ন করা
   const formatPrice = (amountInUSD: number) => {
     const converted = convertPrice(amountInUSD);
     const decimals = currency === 'JPY' ? 0 : 2;

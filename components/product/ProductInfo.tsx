@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
 import { toast } from 'react-hot-toast';
 import { 
   Star, 
@@ -37,20 +38,33 @@ interface ProductInfoProps {
 export default function ProductInfo({ product, onWishlist, isWishlisted }: ProductInfoProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency(); // ২. কারেন্সি ফরম্যাটার কল করা হলো
 
-  const discount = calculateDiscount(product.price, product.salePrice || 0);
-  const saveAmount = calculateSaveAmount(product.price, product.salePrice || 0);
+  // নিখুঁতভাবে প্রাইজ পার্স করার ফাংশন
+  const parsePrice = (val: any) => {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'object') {
+      return Number(val.$numberDecimal || val.value || 0) || 0;
+    }
+    return Number(val) || 0;
+  };
+
+  const originalPrice = parsePrice(product.price);
+  const rawSalePrice = parsePrice(product.salePrice);
+  const salePrice = rawSalePrice > 0 && rawSalePrice < originalPrice ? rawSalePrice : 0;
+
+  const discount = calculateDiscount(originalPrice, salePrice || originalPrice);
+  const saveAmount = salePrice > 0 ? originalPrice - salePrice : 0;
 
   const isDigital = product.productType === 'digital' || product.productType === 'website' || product.productType === 'software';
 
-  // কার্ট হ্যান্ডলার (ফিজিক্যাল প্রোডাক্টের জন্য সঠিক /physical-products/ পাথ দেওয়া হলো)
+  // কার্ট হ্যান্ডলার (ফিজিক্যাল প্রোডাক্টের জন্য সঠিক /physical-products/ পাথ দেওয়া হলো)
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       toast.error('Please login to continue');
       router.push(`/login?redirect=/physical-products/${product._id}`);
       return;
     }
-    // আপনার কার্ট লজিক বা API এখানে যুক্ত করতে পারেন
     toast.success('Product added to cart!');
   };
 
@@ -147,20 +161,20 @@ export default function ProductInfo({ product, onWishlist, isWishlisted }: Produ
         </span>
       </div>
 
-      {/* Price */}
+      {/* Price (ডাইনামিক কারেন্সি ফরম্যাটার ব্যবহার করা হলো) */}
       <div className="bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-slate-900 dark:to-slate-800 border dark:border-slate-800 rounded-xl p-4 mb-5">
-        {product.salePrice ? (
+        {salePrice > 0 ? (
           <div className="flex items-end gap-3 flex-wrap">
-            <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">${product.salePrice}</span>
-            <span className="text-xl text-gray-400 line-through">${product.price}</span>
+            <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">{formatPrice(salePrice)}</span>
+            <span className="text-xl text-gray-400 line-through">{formatPrice(originalPrice)}</span>
             {saveAmount > 0 && (
               <span className="text-sm font-bold text-green-600 bg-green-100 dark:bg-green-950/60 dark:text-green-400 px-2 py-1 rounded-lg">
-                SAVE ${saveAmount} ({discount}%)
+                SAVE {formatPrice(saveAmount)} ({discount}%)
               </span>
             )}
           </div>
         ) : (
-          <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">${product.price}</span>
+          <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">{formatPrice(originalPrice)}</span>
         )}
 
         {/* Stats */}
@@ -181,7 +195,6 @@ export default function ProductInfo({ product, onWishlist, isWishlisted }: Produ
 
       {/* Buttons */}
       <div className="flex gap-3 mb-5">
-        {/* Left Button: Install (Digital) / Add to Cart (Physical) */}
         <button
           onClick={isDigital ? handleCheckout : handleAddToCart}
           className={`flex-1 px-4 py-3.5 rounded-xl font-bold text-base transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${
@@ -194,7 +207,6 @@ export default function ProductInfo({ product, onWishlist, isWishlisted }: Produ
           <span>{isDigital ? 'Install' : 'Add to Cart'}</span>
         </button>
 
-        {/* Right Button: Get Now (Digital) / Buy Now (Physical) */}
         <button
           onClick={handleCheckout}
           className="flex-1 px-4 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-base transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
