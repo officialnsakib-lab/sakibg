@@ -6,43 +6,97 @@ import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 
 export default function BlogPage() {
-  // সব ব্লগ পোস্টের জন্য tt.png লোকাল পাথ ব্যবহার করা হয়েছে
+  // কাস্টমার এবং সেলার উভয়ের আস্থা অর্জনের জন্য ১০টি সাজানো ব্লগ পোস্ট
   const blogPosts = [
     {
       id: '1',
-      title: 'The Future of Multi-Vendor Marketplaces in 2026',
-      category: 'E-Commerce Trends',
-      date: 'September 25, 2026',
+      title: 'How Local Food & Craft Vendors Scale Nationwide Safely',
+      category: 'Vendor Success',
+      date: 'October 06, 2026',
       readTime: '4 min read',
       image: '/images/tt.png',
-      excerpt: 'Discover how digital and physical products are merging under single multi-vendor platforms to transform global online shopping experiences.'
+      excerpt: 'Discover how local food makers and physical product sellers expand their customer base across the country with verified marketplace tools.'
     },
     {
       id: '2',
-      title: 'How to Scale Your Digital Product Sales Effectively',
-      category: 'Vendor Tips',
-      date: 'September 18, 2026',
-      readTime: '6 min read',
+      title: 'Shop with Absolute Trust: Our Secure Cash on Delivery Policy',
+      category: 'Buyer Security',
+      date: 'October 04, 2026',
+      readTime: '5 min read',
       image: '/images/tt.png',
-      excerpt: 'Essential strategies for software developers, e-book authors, and digital creators to maximize visibility and revenue on marketplaces.'
+      excerpt: 'Learn why nationwide Cash on Delivery (COD) ensures complete peace of mind, allowing you to inspect your physical and food items before paying.'
     },
     {
       id: '3',
-      title: 'Secure Online Transactions: What Buyers Need to Know',
-      category: 'Security & Trust',
-      date: 'September 10, 2026',
-      readTime: '5 min read',
+      title: 'Welcome Offer: Enjoy Free Delivery on Your First Order',
+      category: 'Special Offers',
+      date: 'October 02, 2026',
+      readTime: '3 min read',
       image: '/images/tt.png',
-      excerpt: 'A comprehensive guide on how our platform ensures encrypted checkout, protected vendor payouts, and safe digital asset delivery.'
+      excerpt: 'New to our platform? Register your free account today and unlock instant free delivery rewards on your very first purchase.'
     },
     {
       id: '4',
-      title: 'Top 5 Advantages of Starting as a Verified Vendor',
-      category: 'Business Growth',
-      date: 'September 02, 2026',
+      title: 'Freshness Guaranteed: How We Inspect Quality Food Vendors',
+      category: 'Quality Control',
+      date: 'September 28, 2026',
       readTime: '4 min read',
       image: '/images/tt.png',
-      excerpt: 'Learn why becoming a verified seller builds instant customer trust and accelerates brand recognition in a competitive digital market.'
+      excerpt: 'A behind-the-scenes look at our rigorous vendor verification standards to ensure hygienic, fresh, and delicious food reaches your table.'
+    },
+    {
+      id: '5',
+      title: 'Maximize Your Savings: Using 10% Discount Tickets at Checkout',
+      category: 'Smart Shopping',
+      date: 'September 25, 2026',
+      readTime: '4 min read',
+      image: '/images/tt.png',
+      excerpt: 'Step-by-step guide on how to claim promotional discount tokens from our homepage slider and apply them instantly to lower your cart total.'
+    },
+    {
+      id: '6',
+      title: 'Top 5 Benefits of Becoming a Verified Marketplace Seller',
+      category: 'Vendor Growth',
+      date: 'September 20, 2026',
+      readTime: '6 min read',
+      image: '/images/tt.png',
+      excerpt: 'Explore why verified vendor status builds instant buyer trust, boosts store visibility, and accelerates your daily brand revenue.'
+    },
+    {
+      id: '7',
+      title: 'Fast & Reliable Logistics: From Vendor Kitchen to Your Doorstep',
+      category: 'Delivery & Shipping',
+      date: 'September 15, 2026',
+      readTime: '5 min read',
+      image: '/images/tt.png',
+      excerpt: 'Understand our streamlined packaging and shipping network designed specifically to keep physical goods intact and food fresh during transit.'
+    },
+    {
+      id: '8',
+      title: 'Transparent Payouts and Protected Earnings for Sellers',
+      category: 'Vendor Finance',
+      date: 'September 10, 2026',
+      readTime: '4 min read',
+      image: '/images/tt.png',
+      excerpt: 'How our multi-vendor platform ensures on-time, transparent withdrawals and automated commission tracking for all active business partners.'
+    },
+    {
+      id: '9',
+      title: 'Why Customer Reviews Matter in a Multi-Vendor Marketplace',
+      category: 'Community Trust',
+      date: 'September 05, 2026',
+      readTime: '4 min read',
+      image: '/images/tt.png',
+      excerpt: 'Discover how honest buyer feedback helps maintain high service standards and guides shoppers to the most reliable physical and food items.'
+    },
+    {
+      id: '10',
+      title: 'The Future of E-Commerce: Blending Physical Goods & Local Foods',
+      category: 'Market Trends',
+      date: 'September 01, 2026',
+      readTime: '5 min read',
+      image: '/images/tt.png',
+      excerpt: 'An insightful overview of how unified multi-vendor platforms are transforming everyday retail shopping and food delivery habits nationwide.'
     }
   ];
 
