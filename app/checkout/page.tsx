@@ -127,8 +127,8 @@ export default function CheckoutPage() {
   const finalTotalAmountInUSD = discountedSubtotal + baseDeliveryChargeInUSD;
 
   const paymentInfo = {
-    bkash: { number: '01800000000' },
-    nagad: { number: '01800000000' }
+    bkash: { number: '01577394019' },
+    nagad: { number: '01620558257' }
   };
 
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

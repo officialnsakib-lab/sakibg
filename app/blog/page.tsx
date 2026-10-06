@@ -14,7 +14,7 @@ export default function BlogPage() {
       category: 'Vendor Success',
       date: 'October 06, 2026',
       readTime: '4 min read',
-      image: '/images/tt.png',
+      image: '/images/ww.png',
       excerpt: 'Discover how local food makers and physical product sellers expand their customer base across the country with verified marketplace tools.'
     },
     {
@@ -23,7 +23,7 @@ export default function BlogPage() {
       category: 'Buyer Security',
       date: 'October 04, 2026',
       readTime: '5 min read',
-      image: '/images/tt.png',
+      image: '/images/ww2.png',
       excerpt: 'Learn why nationwide Cash on Delivery (COD) ensures complete peace of mind, allowing you to inspect your physical and food items before paying.'
     },
     {
@@ -32,7 +32,7 @@ export default function BlogPage() {
       category: 'Special Offers',
       date: 'October 02, 2026',
       readTime: '3 min read',
-      image: '/images/tt.png',
+      image: '/images/xx.png',
       excerpt: 'New to our platform? Register your free account today and unlock instant free delivery rewards on your very first purchase.'
     },
     {
@@ -41,7 +41,7 @@ export default function BlogPage() {
       category: 'Quality Control',
       date: 'September 28, 2026',
       readTime: '4 min read',
-      image: '/images/tt.png',
+      image: '/images/xx2.png',
       excerpt: 'A behind-the-scenes look at our rigorous vendor verification standards to ensure hygienic, fresh, and delicious food reaches your table.'
     },
     {
@@ -50,7 +50,7 @@ export default function BlogPage() {
       category: 'Smart Shopping',
       date: 'September 25, 2026',
       readTime: '4 min read',
-      image: '/images/tt.png',
+      image: '/images/xxx.png',
       excerpt: 'Step-by-step guide on how to claim promotional discount tokens from our homepage slider and apply them instantly to lower your cart total.'
     },
     {
@@ -59,7 +59,7 @@ export default function BlogPage() {
       category: 'Vendor Growth',
       date: 'September 20, 2026',
       readTime: '6 min read',
-      image: '/images/tt.png',
+      image: '/images/zz.png',
       excerpt: 'Explore why verified vendor status builds instant buyer trust, boosts store visibility, and accelerates your daily brand revenue.'
     },
     {
@@ -68,7 +68,7 @@ export default function BlogPage() {
       category: 'Delivery & Shipping',
       date: 'September 15, 2026',
       readTime: '5 min read',
-      image: '/images/tt.png',
+      image: '/images/78.png',
       excerpt: 'Understand our streamlined packaging and shipping network designed specifically to keep physical goods intact and food fresh during transit.'
     },
     {
@@ -77,7 +77,7 @@ export default function BlogPage() {
       category: 'Vendor Finance',
       date: 'September 10, 2026',
       readTime: '4 min read',
-      image: '/images/tt.png',
+      image: '/images/yq.png',
       excerpt: 'How our multi-vendor platform ensures on-time, transparent withdrawals and automated commission tracking for all active business partners.'
     },
     {
@@ -86,7 +86,7 @@ export default function BlogPage() {
       category: 'Community Trust',
       date: 'September 05, 2026',
       readTime: '4 min read',
-      image: '/images/tt.png',
+      image: '/images/y5.png',
       excerpt: 'Discover how honest buyer feedback helps maintain high service standards and guides shoppers to the most reliable physical and food items.'
     },
     {
@@ -95,7 +95,7 @@ export default function BlogPage() {
       category: 'Market Trends',
       date: 'September 01, 2026',
       readTime: '5 min read',
-      image: '/images/tt.png',
+      image: '/images/t6.png',
       excerpt: 'An insightful overview of how unified multi-vendor platforms are transforming everyday retail shopping and food delivery habits nationwide.'
     }
   ];
