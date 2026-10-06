@@ -24,7 +24,7 @@ const heroSlides = [
     buttonText: "Claim Token",
     buttonLink: "/physical-products",
     badge: "Special Event",
-    image: "/product1.png",
+    image: "/product1.jpeg",
     isClaimSlide: true // ✅ শুধু নতুনদের জন্য টোকেন ক্লেইম বাটন থাকবে
   },
   {
@@ -35,7 +35,7 @@ const heroSlides = [
     buttonText: "Shop Now",
     buttonLink: "/physical-products",
     badge: "Secure Shopping",
-    image: "/product2.png"
+    image: "/product2.jpeg"
   },
   {
     id: 3,
