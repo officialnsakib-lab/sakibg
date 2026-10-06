@@ -16,7 +16,8 @@ import {
   Truck,
   CreditCard,
   MapPin,
-  DownloadCloud
+  DownloadCloud,
+  Ticket
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -41,6 +42,9 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState('');
   
+  // ✅ Token / Ticket State
+  const [useToken, setUseToken] = useState(false);
+
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad' | 'cod'>('bkash');
   const [transactionId, setTransactionId] = useState('');
@@ -87,7 +91,7 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  // প্রাইজ নিখুঁতভাবে পার্স করার ফাংশন (অবজেক্ট বা স্ট্রিং হ্যান্ডেল করার জন্য)
+  // প্রাইজ নিখুঁতভাবে পার্স করার ফাংশন
   const parsePrice = (val: any) => {
     if (val === null || val === undefined) return 0;
     if (typeof val === 'object') {
@@ -112,10 +116,15 @@ export default function CheckoutPage() {
     ? rawUnitPrice * productQuantity 
     : (totalAmount > 0 ? totalAmount : rawCartTotal);
 
+  // ✅ টোকেন বা টিকিট ব্যবহার করলে ১০% ডিসকাউন্ট ক্যালকুলেশন
+  const userTokenBalance = user?.tokens || 0;
+  const tokenDiscountAmount = useToken && userTokenBalance > 0 ? rawCheckoutPrice * 0.10 : 0;
+  const discountedSubtotal = Math.max(0, rawCheckoutPrice - tokenDiscountAmount);
+
   // ডেলিভারি চার্জ ডলারে ফিক্সড (ঢাকার ভেতরে ৬০ টাকা ~ $0.50, বাইরে ১২০ টাকা ~ $1.00 ধরে)
   const baseDeliveryChargeInUSD = shippingAddress.deliveryArea === 'inside_dhaka' ? 0.50 : 1.00;
   
-  const finalTotalAmountInUSD = rawCheckoutPrice + baseDeliveryChargeInUSD;
+  const finalTotalAmountInUSD = discountedSubtotal + baseDeliveryChargeInUSD;
 
   const paymentInfo = {
     bkash: { number: '01800000000' },
@@ -220,7 +229,8 @@ export default function CheckoutPage() {
         paymentMethod,
         productType: isDigital ? 'digital' : 'physical',
         transactionId: paymentMethod !== 'cod' ? transactionId.trim() : undefined,
-        senderNumber: paymentMethod !== 'cod' ? senderNumber.trim() : undefined
+        senderNumber: paymentMethod !== 'cod' ? senderNumber.trim() : undefined,
+        useToken: useToken // ✅ টোকেন ব্যবহারের ফ্ল্যাগ ব্যাকএন্ডে পাঠানো হচ্ছে
       });
 
       if (response.data.success) {
@@ -531,11 +541,53 @@ export default function CheckoutPage() {
                 )}
               </div>
 
+              {/* ✅ টিকিটের মতো সুন্দর ডিজাইন ও টোকেন ব্যবহারের বক্স (সবসময় শো করবে) */}
+              <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-4 text-white shadow-md mb-4 relative overflow-hidden">
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <Ticket className="w-28 h-28" />
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-amber-200" />
+                    <span className="font-bold text-sm tracking-wide">10% DISCOUNT TICKET</span>
+                  </div>
+                  <span className="bg-white/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                    {userTokenBalance > 0 ? `${userTokenBalance} Available` : '0 Available'}
+                  </span>
+                </div>
+
+                {userTokenBalance > 0 ? (
+                  <label className="flex items-center gap-2.5 cursor-pointer mt-3 bg-black/20 p-2.5 rounded-xl border border-white/10 hover:bg-black/30 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={useToken}
+                      onChange={(e) => setUseToken(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-white focus:ring-amber-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-amber-100">
+                      Use this ticket to get <strong className="text-white">10% OFF</strong> on this order!
+                    </span>
+                  </label>
+                ) : (
+                  <p className="text-xs text-amber-100 mt-2 italic bg-black/10 p-2 rounded-lg">
+                    You don't have any active ticket. Claim your free 10% discount ticket from the homepage slider!
+                  </p>
+                )}
+              </div>
+
               <div className="border-t pt-3 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span className="text-gray-900 font-medium">{formatPrice(rawCheckoutPrice)}</span>
                 </div>
+
+                {/* ✅ টিকিট ডিসকাউন্ট লাইন */}
+                {useToken && tokenDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                    <span>Ticket Discount (10%)</span>
+                    <span>-{formatPrice(tokenDiscountAmount)}</span>
+                  </div>
+                )}
 
                 {!isDigital && (
                   <div className="flex justify-between text-sm text-gray-600">
@@ -553,7 +605,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={processing || (!directProduct && cart.length === 0)}
-                className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-sm"
+                className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-md text-sm cursor-pointer"
               >
                 {processing ? (
                   <>

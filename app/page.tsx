@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'react-hot-toast';
 import { 
   Search, 
   Shield, 
@@ -18,7 +20,7 @@ import {
   Settings,
   Globe
 } from 'lucide-react';
-import HeroSlider from '@/components/home/HeroSlider'; // 👈 হিরো স্লাইডার কম্পোনেন্ট ইমপোর্ট করা হয়েছে
+import HeroSlider from '@/components/home/HeroSlider';
 import HomeCategories from '@/components/home/HomeCategories';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import PopularProducts from '@/components/home/PopularProducts';
@@ -26,12 +28,33 @@ import Footer from '@/components/layout/Footer';
 
 export default function HomePage() {
   const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  // ✅ সঠিক পাথ সহ ভেন্ডর স্টার্ট সেলিং বাটন ক্লিক হ্যান্ডলার
+  const handleStartSelling = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // ১. যদি ইউজার লগইন করা না থাকে, তবে রেজিস্ট্রেশন পেজে রিডাইরেক্ট করবে
+    if (!isAuthenticated) {
+      toast.error('Please register or login first to start selling');
+      router.push('/register');
+      return;
+    }
+
+    // ২. যদি ইউজার লগইন করা থাকে এবং সে ভেন্ডর বা এডমিন হয়, সরাসরি সঠিক প্রডাক্ট আপলোড পেজে যাবে
+    if (user?.role === 'vendor' || user?.role === 'admin') {
+      router.push('/vendor/products/upload');
+    } else {
+      // সাধারণ ইউজার হলে রেজিস্ট্রেশন পেজে পাঠাবে
+      router.push('/register');
     }
   };
 
@@ -43,7 +66,7 @@ export default function HomePage() {
         <section className="pt-6 pb-12 bg-[#070b12]">
           <div className="container mx-auto px-4">
             
-            {/* রেসপন্সিভ হিরো স্লাইডার (এখানে প্রতিদিন অফার আপডেট করতে পারবেন) */}
+            {/* রেসপন্সিভ হিরো স্লাইডার */}
             <HeroSlider />
 
             {/* স্লাইডারের নিচে সার্চ বার ও স্ট্যাটস হাইলাইটস */}
@@ -143,12 +166,13 @@ export default function HomePage() {
                   Join our trusted marketplace and reach millions of customers worldwide.
                 </p>
                 <div>
-                  <Link 
-                    href="/vendor/register" 
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-neutral-950 font-bold rounded-xl text-sm transition-all shadow-lg"
+                  {/* ✅ ডাইনামিক ক্লিক হ্যান্ডলার */}
+                  <button 
+                    onClick={handleStartSelling}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-neutral-950 font-bold rounded-xl text-sm transition-all shadow-lg cursor-pointer"
                   >
                     Start Selling <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -263,7 +287,7 @@ export default function HomePage() {
                     <p className="text-xs text-gray-300">Shop smart. Save more.</p>
                     <div>
                       <Link 
-                        href="/deals" 
+                        href="/physical-products" 
                         className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 hover:bg-amber-500 text-neutral-950 font-bold rounded-xl text-xs transition-colors shadow-md"
                       >
                         Explore Deals <ArrowRight className="w-3.5 h-3.5" />

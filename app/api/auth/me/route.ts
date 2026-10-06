@@ -38,20 +38,22 @@ export async function GET(req: NextRequest) {
             vendorType: user.vendorType,
             isApprovedVendor: user.isApprovedVendor,
             commissionRate: user.commissionRate,
+            tokens: user.tokens || 0, // ✅ টোকেন ব্যালেন্স যুক্ত করা হলো
+            hasClaimedToken: user.hasClaimedToken || false, // ✅ ক্লেইম স্ট্যাটাস যুক্ত করা হলো
             totalSales: user.totalSales || 0,
             totalEarnings: user.totalEarnings || 0,
             pendingEarnings: user.pendingEarnings || 0,
-            withdrawnEarnings: user.withdrawnEarnings || 0, // ✅ Add
-            totalProducts: user.totalProducts || 0, // ✅ Add
-            totalWebsiteDemos: user.totalWebsiteDemos || 0, // ✅ Add
-            activeProducts: user.activeProducts || 0, // ✅ Add
-            activeWebsiteDemos: user.activeWebsiteDemos || 0, // ✅ Add
-            pendingProducts: user.pendingProducts || 0, // ✅ Add
-            pendingWebsiteDemos: user.pendingWebsiteDemos || 0, // ✅ Add
-            averageRating: user.averageRating || 0, // ✅ Add
-            totalReviews: user.totalReviews || 0, // ✅ Add
-            isBanned: user.isBanned || false,    // ✅ Add
-            isActive: user.isActive || true,      // ✅ Add
+            withdrawnEarnings: user.withdrawnEarnings || 0,
+            totalProducts: user.totalProducts || 0,
+            totalWebsiteDemos: user.totalWebsiteDemos || 0,
+            activeProducts: user.activeProducts || 0,
+            activeWebsiteDemos: user.activeWebsiteDemos || 0,
+            pendingProducts: user.pendingProducts || 0,
+            pendingWebsiteDemos: user.pendingWebsiteDemos || 0,
+            averageRating: user.averageRating || 0,
+            totalReviews: user.totalReviews || 0,
+            isBanned: user.isBanned || false,
+            isActive: user.isActive || true,
             avatar: user.avatar,
             bio: user.bio,
             pendingIncome: user.pendingIncome || 0,
@@ -60,7 +62,7 @@ export async function GET(req: NextRequest) {
             address: user.address,
             city: user.city,
             country: user.country,
-            website: user.website, // ✅ Add
+            website: user.website,
             isEmailVerified: user.isEmailVerified || false,
             createdAt: user.createdAt
           }

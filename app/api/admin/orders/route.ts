@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Order from '@/models/Order';
-import User from '@/models/User'; // ✅ ইউজার মডেল ইম্পোর্ট করা হয়েছে
+import User from '@/models/User'; // ✅ ইউজার মডেল ইম্পোর্ট করা হয়েছে
 import { getUserFromCookie } from '@/lib/auth';
 
 // ১. এডমিন অর্ডারের তালিকা এবং স্ট্যাটিস্টিক্স পাওয়ার GET মেথড
@@ -119,9 +119,27 @@ export async function PATCH(req: NextRequest) {
 
     const oldPaymentStatus = order.paymentStatus;
 
-    // স্ট্যাটাস ফিল্ড আপডেট
-    if (orderStatus) order.orderStatus = orderStatus;
-    if (paymentStatus) order.paymentStatus = paymentStatus;
+    // ✅ ফ্রন্টএন্ড থেকে আসা যেকোনো স্ট্যাটাসকে সুনির্দিষ্ট ফ্লোতে নরম্যালিস্ট বা ম্যাপ করা হলো
+    if (orderStatus) {
+      const lowerStatus = String(orderStatus).toLowerCase();
+      if (lowerStatus.includes('packing') || lowerStatus.includes('processing') || lowerStatus.includes('confirmed')) {
+        order.orderStatus = 'confirmed';
+      } else if (lowerStatus.includes('ship')) {
+        order.orderStatus = 'shipping';
+      } else if (lowerStatus.includes('receive') || lowerStatus.includes('complet')) {
+        order.orderStatus = 'delivered';
+      } else if (lowerStatus.includes('cancel')) {
+        order.orderStatus = 'cancelled';
+      } else if (lowerStatus.includes('pending')) {
+        order.orderStatus = 'pending';
+      } else {
+        order.orderStatus = lowerStatus;
+      }
+    }
+
+    if (paymentStatus) {
+      order.paymentStatus = paymentStatus;
+    }
 
     // ফিজিক্যাল প্রোডাক্টের জন্য শিপিং/কুরিয়ার আপডেট
     if (order.productType === 'physical') {
@@ -129,7 +147,6 @@ export async function PATCH(req: NextRequest) {
       if (trackingNumber) order.trackingNumber = trackingNumber;
     }
 
-    // pre('save') হুক অনুযায়ী পেমেন্ট 'paid' অথবা অর্ডার 'completed' হলে স্বয়ংক্রিয়ভাবে ডাউনলোড টোকেন তৈরি হবে
     await order.save();
 
     // ✅ পেমেন্ট স্ট্যাটাস 'paid' বা 'completed' এ পরিবর্তিত হলে ভেন্ডরের ব্যালেন্স আপডেট হবে

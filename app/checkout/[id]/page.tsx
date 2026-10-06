@@ -6,13 +6,15 @@ import Link from 'next/link';
 import axios from 'axios';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { useCurrency } from '@/context/CurrencyContext'; // ১. কারেন্সি হুক ইমপোর্ট করা হলো
+import { useCurrency } from '@/context/CurrencyContext';
 import { toast } from 'react-hot-toast';
 import { 
   Loader2,
   CheckCircle,
   Truck,
-  CreditCard
+  CreditCard,
+  Ticket,
+  Check
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -20,9 +22,8 @@ export default function CheckoutPage() {
   const params = useParams();
   const { cart, totalAmount, clearCart } = useCart();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { currency, exchangeRate, formatPrice, convertPrice } = useCurrency(); // ২. কারেন্সি মেথডগুলো কল করা হলো
+  const { currency, exchangeRate, formatPrice } = useCurrency();
 
-  // Dynamic route product ID (supports [ib] or [id])
   const routeProductId = params?.ib || params?.id;
 
   const [productData, setProductData] = useState<any>(null);
@@ -32,13 +33,14 @@ export default function CheckoutPage() {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState('');
 
-  // Payment state
+  // ✅ Token / Ticket State
+  const [useToken, setUseToken] = useState(false);
+
   const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad' | 'cod'>('cod');
   const [transactionId, setTransactionId] = useState('');
   const [senderNumber, setSenderNumber] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Shipping Address
   const [shippingAddress, setShippingAddress] = useState({
     fullName: '',
     phone: '',
@@ -49,7 +51,6 @@ export default function CheckoutPage() {
     deliveryArea: 'inside_dhaka',
   });
 
-  // Fetch product if direct URL purchase
   useEffect(() => {
     if (routeProductId) {
       axios.get(`/api/products/${routeProductId}`)
@@ -72,7 +73,6 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  // Safe Price Calculations (USD Base)
   const getItemPrice = (item: any) => {
     if (!item) return 0;
     const p = item.salePrice ?? item.price ?? 0;
@@ -86,10 +86,13 @@ export default function CheckoutPage() {
     ? getItemPrice(productData) 
     : (totalAmount || 0);
 
-  // ডেলিভারি চার্জ টাকায় فিক্সড (ঢাকার ভেতরে ৬০ টাকা ~ $0.50, বাইরে ১২০ টাকা ~ $1.00 ধরে USD এ কনভার্ট করা হলো)
+  // ✅ টোকেন বা টিকিট ব্যালেন্স এবং ১০% ডিসকাউন্ট ক্যালকুলেশন
+  const userTokenBalance = user?.tokens || 0;
+  const tokenDiscountAmount = useToken && userTokenBalance > 0 ? checkoutPrice * 0.10 : 0;
+  const discountedSubtotal = Math.max(0, checkoutPrice - tokenDiscountAmount);
+
   const deliveryChargeInUSD = shippingAddress.deliveryArea === 'inside_dhaka' ? 0.50 : 1.00;
-  
-  const finalTotalAmountInUSD = checkoutPrice + deliveryChargeInUSD;
+  const finalTotalAmountInUSD = discountedSubtotal + deliveryChargeInUSD;
 
   const paymentInfo = {
     bkash: { number: '01800000000' },
@@ -135,7 +138,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Build payload items list (Physical & Food items only)
     let orderItems = [];
     if (productData) {
       orderItems = [{
@@ -180,7 +182,8 @@ export default function CheckoutPage() {
         paymentMethod,
         productType: 'physical',
         transactionId: paymentMethod !== 'cod' ? transactionId.trim() : undefined,
-        senderNumber: paymentMethod !== 'cod' ? senderNumber.trim() : undefined
+        senderNumber: paymentMethod !== 'cod' ? senderNumber.trim() : undefined,
+        useToken: useToken
       });
 
       if (response.data.success) {
@@ -411,11 +414,53 @@ export default function CheckoutPage() {
                 )}
               </div>
 
+              {/* ✅ টিকিটের মতো সুন্দর ডিজাইন ও টোকেন ব্যবহারের বক্স */}
+              <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-4 text-white shadow-md mb-4 relative overflow-hidden">
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <Ticket className="w-28 h-28" />
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-amber-200" />
+                    <span className="font-bold text-sm tracking-wide">10% DISCOUNT TICKET</span>
+                  </div>
+                  <span className="bg-white/20 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                    {userTokenBalance > 0 ? `${userTokenBalance} Available` : '0 Available'}
+                  </span>
+                </div>
+
+                {userTokenBalance > 0 ? (
+                  <label className="flex items-center gap-2.5 cursor-pointer mt-3 bg-black/20 p-2.5 rounded-xl border border-white/10 hover:bg-black/30 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={useToken}
+                      onChange={(e) => setUseToken(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-white focus:ring-amber-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-amber-100">
+                      Use this ticket to get <strong className="text-white">10% OFF</strong> on this order!
+                    </span>
+                  </label>
+                ) : (
+                  <p className="text-xs text-amber-100 mt-2 italic bg-black/10 p-2 rounded-lg">
+                    You don't have any active ticket. Claim your free 10% discount ticket from the homepage slider!
+                  </p>
+                )}
+              </div>
+
               <div className="border-t pt-3 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span className="text-gray-900 font-medium">{formatPrice(checkoutPrice)}</span>
                 </div>
+
+                {/* ✅ টিকিট ডিসকাউন্ট লাইন */}
+                {useToken && tokenDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                    <span>Ticket Discount (10%)</span>
+                    <span>-{formatPrice(tokenDiscountAmount)}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping</span>
@@ -431,7 +476,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={processing}
-                className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-md text-sm"
+                className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-md text-sm cursor-pointer"
               >
                 {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : `Confirm & Submit Order - ${formatPrice(finalTotalAmountInUSD)}`}
               </button>

@@ -31,7 +31,7 @@ interface ProductCardProps {
     salePrice: number | any;
     thumbnailUrl: string;
     images?: string[];
-    previewImages?: Array<{ url: string; id: string }>; // <--- গ্যালারি অবজেক্ট অ্যারে যোগ করা হলো
+    previewImages?: Array<{ url: string; id: string }>;
     averageRating: number;
     totalReviews: number;
     sales: number;
@@ -59,7 +59,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // গ্যালারি ছবিগুলো অবজেক্ট (previewImages) বা স্ট্রিং (images) যাই হোক না কেন তা হ্যান্ডেল করা হলো
   const galleryUrls = (product.previewImages || product.images || []).map((img: any) => 
     typeof img === 'object' && img !== null ? img.url : img
   );
@@ -71,7 +70,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const isLoved = isInWishlist(product._id);
   
-  // সঠিক ফিজিক্যাল প্রোডাক্ট ডিটেইল পেজ রাউট
   const productDetailPageUrl = `/physical-products/${product._id}`;
 
   const parsePrice = (val: any) => {
@@ -194,8 +192,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className="text-[9px] sm:text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 sm:px-2 py-0.5 rounded-full truncate capitalize">
               {product.category || 'General'}
             </span>
-            <span className="text-[8px] sm:text-[10px] font-semibold text-orange-600 bg-orange-50 px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Box className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> PHYSICAL / FOOD
+            
+            {/* ✅ ডায়নামিক প্রোডাক্ট বা ফুড টাইপ ব্যাজ */}
+            <span className="text-[8px] sm:text-[10px] font-semibold text-orange-600 bg-orange-50 px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-0.5 uppercase">
+              <Box className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> 
+              {product.productType === 'food' ? 'Food' : product.productType === 'physical' ? 'Physical' : (product.productType || 'Physical')}
             </span>
           </div>
 

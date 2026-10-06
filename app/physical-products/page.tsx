@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Search, Loader2, Package, X, ShoppingCart, Truck, ShieldCheck } from 'lucide-react';
-import ProductCard from '@/components/product/ProductCard'; // ফিজিক্যাল প্রোডাক্ট কার্ড
+import { Search, Loader2, Package, X, ShoppingCart, Truck } from 'lucide-react';
+import ProductCard from '@/components/product/ProductCard';
 import ProductFilterSidebar from '@/components/product/ProductFilterSidebar';
 import CategorySlider from '@/components/product/CategorySlider';
 import Link from 'next/link';
@@ -47,7 +47,7 @@ export default function PhysicalProductsPage() {
     setLoading(true);
     try {
       const params: any = { 
-        type: 'physical', // ফিজিক্যাল প্রোডাক্টের জন্য টাইপ ফিজিক্যাল করা হলো
+        type: 'physical', // ফিজিক্যাল ও ফুড আইটেম ফিল্টার করার জন্য
         page, 
         limit, 
         sort 
@@ -124,15 +124,15 @@ export default function PhysicalProductsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Header Banner with Golden Accent */}
+      {/* Header Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-black border-b border-slate-800 py-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 mb-2">
-              Physical Products Store
+              Physical Products & Food Store
             </h1>
             <p className="text-slate-400 text-sm flex items-center gap-2">
-              <Truck className="w-4 h-4 text-amber-400" /> সারা বাংলাদেশে ক্যাশ অন হোম ডেলিভারি ({totalProducts} টি পণ্য উপলব্ধ)
+              <Truck className="w-4 h-4 text-amber-400" /> সারা বাংলাদেশে ক্যাশ অন হোম ডেলিভারি ({totalProducts} টি আইটেম উপলব্ধ)
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ export default function PhysicalProductsPage() {
                   type="text"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="ফিজিক্যাল প্রোডাক্ট সার্চ করুন..."
+                  placeholder="প্রোডাক্ট বা ফুড আইটেম সার্চ করুন..."
                   className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
@@ -178,7 +178,6 @@ export default function PhysicalProductsPage() {
             </select>
           </div>
 
-          {/* Active Filters */}
           {activeFilters.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 items-center">
               {activeFilters.map((filter, i) => (
@@ -200,7 +199,6 @@ export default function PhysicalProductsPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="md:flex gap-8">
-          {/* Sidebar Filters */}
           <ProductFilterSidebar
             categories={categories}
             priceRange={priceRange}
@@ -218,7 +216,6 @@ export default function PhysicalProductsPage() {
             onClearFilters={handleClearFilters}
           />
 
-          {/* Products Grid & Categories */}
           <div className="flex-1">
             <CategorySlider
               categories={categories}
@@ -238,7 +235,6 @@ export default function PhysicalProductsPage() {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex justify-center gap-2 mt-10">
                     <button
@@ -274,8 +270,8 @@ export default function PhysicalProductsPage() {
             ) : (
               <div className="text-center py-24 bg-slate-900 border border-slate-800 rounded-2xl">
                 <Package className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-200">কোন ফিজিক্যাল প্রোডাক্ট পাওয়া যায়নি</h3>
-                <p className="text-slate-400 text-sm mt-1 mb-6">অন্য ফিল্টার বা কিওয়ার্ড দিয়ে সার্চ করুন।</p>
+                <h3 className="text-xl font-semibold text-slate-200">কোনো প্রোডাক্ট বা ফুড আইটেম পাওয়া যায়নি</h3>
+                <p className="text-slate-400 text-sm mt-1 mb-6">অন্য ফিল্টার বা কিওয়ার্ড দিয়ে সার্চ করুন।</p>
                 <button onClick={handleClearFilters} className="px-6 py-2.5 bg-amber-500 text-slate-950 font-semibold rounded-xl hover:bg-amber-400 transition-all">
                   ফিল্টার রিসেট করুন
                 </button>

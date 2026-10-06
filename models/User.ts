@@ -39,6 +39,16 @@ const userSchema = new mongoose.Schema({
     default: 10
   },
   
+  // ✅ Token System & One-Time Campaign Claim (ADDED)
+  tokens: {
+    type: Number,
+    default: 0
+  },
+  hasClaimedToken: {
+    type: Boolean,
+    default: false
+  },
+
   // Earnings
   totalSales: {
     type: Number,
@@ -79,7 +89,7 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   
-  // ✅ Password Reset (ADDED)
+  // Password Reset
   resetPasswordToken: {
     type: String,
     default: null
@@ -184,7 +194,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ Hash password before save
+// Hash password before save
 userSchema.pre('save', async function() {
   const user = this as any;
   
