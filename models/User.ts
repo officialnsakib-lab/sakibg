@@ -25,11 +25,6 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'vendor', 'customer'],
     default: 'customer'
   },
-  vendorType: {
-    type: String,
-    enum: ['digital_products', 'website_demo', 'both'],
-    default: null
-  },
   isApprovedVendor: {
     type: Boolean,
     default: false

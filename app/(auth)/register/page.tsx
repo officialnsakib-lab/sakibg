@@ -129,8 +129,7 @@ function RegisterForm() {
         name,
         email,
         password,
-        role,
-        vendorType: role === 'vendor' ? 'physical_products' : undefined
+        role
       });
       
       if (response.data.success) {

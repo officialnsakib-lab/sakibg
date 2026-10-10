@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
     
     const body = await req.json();
-    const { name, email, password, role, vendorType } = body;
+    const { name, email, password, role } = body;
     
     // Validation
     if (!name || !email || !password) {
@@ -128,7 +128,6 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase().trim(),
       password,
       role: role || 'customer',
-      vendorType: role === 'vendor' ? vendorType : null,
       isApprovedVendor: role === 'vendor' ? false : true,
       isEmailVerified: false,
       emailVerificationOTP: otp,
